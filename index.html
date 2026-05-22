@@ -594,6 +594,8 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
           <option value="DRIVALIA DIRETTO BY PETRAROLO">DRIVALIA DIRETTO BY PETRAROLO</option>
           <option value="SANTANDER RENTING DIRETTO BY PETRAROLO">SANTANDER RENTING DIRETTO BY PETRAROLO</option>
           <option value="ITALRENT DIRETTO BY PETRAROLO">ITALRENT DIRETTO BY PETRAROLO</option>
+          <option value="ROLFO ICE">ROLFO ICE</option>
+          <option value="GERVASI INDUSTRIAL">GERVASI INDUSTRIAL</option>
           <option value="ALTRO">ALTRO (specifica)</option>
         </select>
       </div>
@@ -616,6 +618,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
           <option>Anita Petrarolo</option><option>Domenico Monopoli</option><option>Giuseppe Monopoli</option><option>Alberto Garbetta</option><option>Loris De Gioia</option><option>Riccardo Regano</option><option>Michele Merra</option>
         </select>
       </div>
+      <div class="form-group"><div class="form-label">N° pezzi sottoscritti <span class="form-req">*</span></div><input id="c-pezzi" type="number" placeholder="es. 1" min="1" step="1" value="1"></div>
       <div class="form-group"><div class="form-label">Margine contrattualizzato (€) <span class="form-req">*</span></div><input id="c-margine" type="number" placeholder="es. 1500" min="0" step="0.01"></div>
       <div class="form-group"><div class="form-label">Bonus economico riconosciuto (€)</div><input id="c-bonus" type="number" placeholder="es. 200" min="0" step="0.01"></div>
       <div class="form-group"><div class="form-label">Margine segnalazione da dare (€)</div><input id="c-segnalazione" type="number" placeholder="es. 100" min="0" step="0.01"></div>
@@ -1530,7 +1533,7 @@ async function rContratti(){
   // Raggruppa per mese per il venditore corrente
   const mesi={};
   contratti.forEach(c=>{
-    if(!mesi[c.mese])mesi[c.mese]={contratti:[],totMargine:0,totBonus:0,totSegnalazione:0};
+    if(!mesi[c.mese])mesi[c.mese]={contratti:[],totPezzi:0,totMargine:0,totBonus:0,totSegnalazione:0};
     mesi[c.mese].contratti.push(c);
     mesi[c.mese].totMargine+=(parseFloat(c.margine)||0);
     mesi[c.mese].totBonus+=(parseFloat(c.bonus)||0);
@@ -1574,6 +1577,7 @@ async function rContratti(){
           <div style="font-size:13px;font-weight:700;color:var(--navy)">${formatMese(mese)}</div>
           <div style="display:flex;gap:16px;font-size:12px">
             <span><strong>${m.contratti.length}</strong> contratti</span>
+            <span><strong>${m.totPezzi||0}</strong> pezzi</span>
             <span>Margine: <strong style="color:var(--orange)">€ ${m.totMargine.toLocaleString('it-IT')}</strong></span>
             ${m.totBonus>0?`<span>Bonus: <strong style="color:var(--green)">€ ${m.totBonus.toLocaleString('it-IT')}</strong></span>`:''}
             ${m.totSegnalazione>0?`<span>Segnalazione: <strong style="color:var(--gold)">€ ${m.totSegnalazione.toLocaleString('it-IT')}</strong></span>`:''}
@@ -1584,6 +1588,7 @@ async function rContratti(){
           <thead><tr>
             <th>Cliente</th>
             <th>Città</th>
+            <th>Pezzi</th>
             <th>Prodotto</th>
             <th>Veicolo / Contratto</th>
             <th>Provenienza</th>
@@ -1601,6 +1606,7 @@ async function rContratti(){
           ${m.contratti.map(c=>`<tr>
             <td style="font-weight:600">${c.cliente||'—'}</td>
             <td style="color:var(--text2)">${c.citta||'—'}</td>
+            <td style="text-align:center;font-weight:700;color:var(--navy)">${c.pezzi||1}</td>
             <td><span style="font-size:11px;font-weight:600;color:var(--navy)">${c.prodotto||'—'}</span></td>
             <td style="color:var(--text2)">${c.veicolo||'—'}</td>
             <td>${c.provenienza?`<span class="badge ${c.provenienza==='LEAD DA FACILE.IT'?'bg-b':c.provenienza==='LEAD DA DIALOGO'?'bg-n':c.provenienza==='LEAD DA SEGNALATORE'?'bg-go':'bg-gr'}" style="font-size:10px">${c.provenienza.replace('LEAD DA ','')}</span>`:'<span style="color:var(--text3);font-size:11px">Diretto</span>'}</td>
@@ -1815,7 +1821,7 @@ async function salvaContratto(){
   const cliente=document.getElementById('c-cliente').value.trim();
   const mese=document.getElementById('c-mese').value;
   const margine=document.getElementById('c-margine').value;
-  if(!cliente||!mese||!margine){
+  if(!cliente||!mese||!margine||!document.getElementById('c-pezzi').value){
     showErr(err,'Compila i campi obbligatori: Cliente, Mese, Margine.');
     btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';
     return;
@@ -1848,6 +1854,7 @@ async function salvaContratto(){
       venditore_id:CU.id,
       venditore_nome:CU.nome,
       collega:document.getElementById('c-collega').value||null,
+      pezzi:parseInt(document.getElementById('c-pezzi').value)||1,
       margine:parseFloat(margine)||0,
       bonus:parseFloat(document.getElementById('c-bonus').value)||null,
       margine_segnalazione:parseFloat(document.getElementById('c-segnalazione').value)||null,
@@ -1861,7 +1868,7 @@ async function salvaContratto(){
     closeModal('modal-contratto');
     showToast('Contratto salvato con successo!');
     // Reset form
-    ['c-cliente','c-citta','c-veicolo','c-prodotto-custom','c-partner','c-margine','c-bonus','c-segnalazione','c-segnalatore','c-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['c-cliente','c-citta','c-veicolo','c-prodotto-custom','c-partner','c-margine','c-pezzi','c-bonus','c-segnalazione','c-segnalatore','c-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     document.getElementById('c-prodotto-tipo').value='';
     toggleProdottoCustom('');
     document.getElementById('c-collega').value='';
