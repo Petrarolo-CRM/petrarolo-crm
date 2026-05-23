@@ -1570,7 +1570,15 @@ async function rReportLead(){
     </div>
     <div class="tbl-wrap"><table class="tbl" id="rl-table"><thead><tr><th>Cliente</th><th>Città</th><th>Venditore</th><th>Provenienza</th><th>Stato</th><th>Data apertura</th><th>Azioni</th></tr></thead>
     <tbody id="rl-tbody">
-    ${leads.map(l=>`<tr><td style="font-weight:600">${l.nome||'—'}</td><td style="color:var(--text2)">${l.citta||'—'}</td><td style="font-size:11.5px">${l.venditore_nome||'—'}</td><td style="font-size:11px">${(l.fonte||'—').replace('LEAD DA ','')}</td><td><span style="background:${STATO_COLORS[l.stato_lead]||'#F4F5F7'};color:${STATO_TEXT[l.stato_lead]||'#4A5568'};padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:500">${(l.stato_lead||'Nuova').split(' — ')[0]}</span></td><td style="font-size:11px;color:var(--text3)">${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</td><td><div style="display:flex;gap:4px"><button class="btn btn-sm" onclick="cambiaStatoLead(${l.id},'${(l.stato_lead||'Nuova').replace(/'/g,\'\\'\'')}')" title="Cambia stato"><i class="ti ti-tag"></i></button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${l.id};window._currentTimelineNome='${(l.nome||'').replace(/'/g,\'\\'\'') }';openTimeline(${l.id})" title="Timeline"><i class="ti ti-timeline"></i></button></div></td></tr>`).join('')}
+    ${leads.map(l=>{
+      const sl=l.stato_lead||'Nuova';
+      const sc=STATO_COLORS[sl]||'#F4F5F7';
+      const st=STATO_TEXT[sl]||'#4A5568';
+      const slabel=sl.split(' — ')[0];
+      const lid=l.id;
+      const lnome=(l.nome||'').replace(/'/g,"");
+      return`<tr><td style="font-weight:600">${l.nome||'—'}</td><td style="color:var(--text2)">${l.citta||'—'}</td><td style="font-size:11.5px">${l.venditore_nome||'—'}</td><td style="font-size:11px">${(l.fonte||'—').replace('LEAD DA ','')}</td><td><span style="background:${sc};color:${st};padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:500">${slabel}</span></td><td style="font-size:11px;color:var(--text3)">${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</td><td><div style="display:flex;gap:4px"><button class="btn btn-sm" onclick="cambiaStatoLead(${lid},this.dataset.s)" data-s="${sl}" title="Cambia stato"><i class="ti ti-tag"></i></button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${lid};window._currentTimelineNome='${lnome}';openTimeline(${lid})" title="Timeline"><i class="ti ti-timeline"></i></button></div></td></tr>`;
+    }).join('')}
     </tbody></table></div>
   </div>`;
   setTimeout(async()=>{
@@ -1593,7 +1601,15 @@ async function filtroLead(){
   if(al)q=q.lte('created_at',al+'T23:59:59');
   const{data}=await q;const leads=data||[];
   const tbody=document.getElementById('rl-tbody');if(!tbody)return;
-  tbody.innerHTML=leads.map(l=>`<tr><td style="font-weight:600">${l.nome||'—'}</td><td style="color:var(--text2)">${l.citta||'—'}</td><td style="font-size:11.5px">${l.venditore_nome||'—'}</td><td style="font-size:11px">${(l.fonte||'—').replace('LEAD DA ','')}</td><td><span style="background:${STATO_COLORS[l.stato_lead]||'#F4F5F7'};color:${STATO_TEXT[l.stato_lead]||'#4A5568'};padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:500">${(l.stato_lead||'Nuova').split(' — ')[0]}</span></td><td style="font-size:11px;color:var(--text3)">${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</td><td><div style="display:flex;gap:4px"><button class="btn btn-sm" onclick="cambiaStatoLead(${l.id},'${(l.stato_lead||'Nuova').replace(/'/g,\'\\'\'')}')" title="Cambia stato"><i class="ti ti-tag"></i></button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${l.id};window._currentTimelineNome='${(l.nome||'').replace(/'/g,\'\\'\'') }';openTimeline(${l.id})" title="Timeline"><i class="ti ti-timeline"></i></button></div></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">Nessuna lead trovata</td></tr>';
+  tbody.innerHTML=leads.map(l=>{
+    const sl=l.stato_lead||'Nuova';
+    const sc=STATO_COLORS[sl]||'#F4F5F7';
+    const st2=STATO_TEXT[sl]||'#4A5568';
+    const slabel=sl.split(' — ')[0];
+    const lid=l.id;
+    const lnome=(l.nome||'').replace(/'/g,'');
+    return`<tr><td style="font-weight:600">${l.nome||'—'}</td><td style="color:var(--text2)">${l.citta||'—'}</td><td style="font-size:11.5px">${l.venditore_nome||'—'}</td><td style="font-size:11px">${(l.fonte||'—').replace('LEAD DA ','')}</td><td><span style="background:${sc};color:${st2};padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:500">${slabel}</span></td><td style="font-size:11px;color:var(--text3)">${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</td><td><div style="display:flex;gap:4px"><button class="btn btn-sm" onclick="cambiaStatoLead(${lid},this.dataset.s)" data-s="${sl}" title="Cambia stato"><i class="ti ti-tag"></i></button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${lid};window._currentTimelineNome='${lnome}';openTimeline(${lid})" title="Timeline"><i class="ti ti-timeline"></i></button></div></td></tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">Nessuna lead trovata</td></tr>';
 }
 
 async function cambiaStatoLead(id, statoAttuale){
@@ -1680,6 +1696,147 @@ function esportaLeadPdf(){
   printWin.document.write('<!DOCTYPE html><html><head><title>Report Lead</title><style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px}h1{font-size:16px}table{width:100%;border-collapse:collapse}th{background:#1E2D3D;color:#fff;padding:6px 8px;text-align:left;font-size:10px}td{padding:5px 8px;border-bottom:1px solid #eee;font-size:10px}</style></head><body><h1>Report Lead — Petrarolo & Co. SRL SB</h1><p style="font-size:11px;color:#666">Generato il '+new Date().toLocaleString('it-IT')+' · '+CU.nome+' · '+stato+(dal?' · Dal: '+dal:'')+(al?' · Al: '+al:'')+'</p>'+table.outerHTML+'<p style="text-align:right;font-size:10px;color:#666">Petrarolo & Co. SRL SB — Moving Solutions</p></body></html>');
   printWin.document.close();printWin.focus();setTimeout(()=>{printWin.print();},500);
 }
+
+
+async function startApp(){
+  document.getElementById('user-av').textContent=CU.nome.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('user-name').textContent=CU.nome;
+  const roleLabel={direzione:'Direzione',cfo:'CFO — Amministrazione',venditore:CU.ruolo_label||'Venditore',admin:'Amministratore'}[CU.ruolo]||CU.ruolo_label||CU.ruolo;
+  document.getElementById('user-role').textContent=roleLabel;
+  if(isDir()||CU.email==='anita@petraroloeco.com'){document.querySelectorAll('.dir-only').forEach(el=>el.style.display='flex');}
+  document.getElementById('app').classList.add('vis');
+  setupNav();
+  await updatePresence();
+  setInterval(updatePresence,30000);
+  setInterval(refreshOnlineCount,15000);
+  setInterval(aggiornaContatorNotifiche,30000);
+  setTimeout(aggiornaContatorNotifiche,2000);
+  renderSec('dashboard');
+}
+
+function toggleSegnalatore(val){
+  const grp=document.getElementById('segnalatore-group');
+  if(grp){
+    grp.style.display=val==='LEAD DA SEGNALATORE'?'flex':'none';
+    grp.style.flexDirection='column';grp.style.gap='4px';
+    if(val!=='LEAD DA SEGNALATORE'){const s=document.getElementById('f-segnalatore');if(s)s.value='';}
+  }
+}
+
+async function selfChangePassword(){
+  const oldPwd=document.getElementById('cp-old').value;
+  const newPwd1=document.getElementById('cp-new1').value;
+  const newPwd2=document.getElementById('cp-new2').value;
+  const err=document.getElementById('cp-self-err');
+  err.style.display='none';
+  if(!oldPwd||!newPwd1||!newPwd2){err.textContent='Compila tutti i campi.';err.style.display='block';return;}
+  if(newPwd1.length<6){err.textContent='Minimo 6 caratteri.';err.style.display='block';return;}
+  if(newPwd1!==newPwd2){err.textContent='Le password non coincidono.';err.style.display='block';return;}
+  const oldHash=btoa(oldPwd+'_petrarolo_salt_2024');
+  try{
+    const{data,error}=await sb.from('crm_utenti').select('id,password_hash').eq('id',CU.id).single();
+    if(error||!data){err.textContent='Errore verifica utente.';err.style.display='block';return;}
+    if(data.password_hash!==oldHash){err.textContent='La password attuale non è corretta.';err.style.display='block';return;}
+    const newHash=btoa(newPwd1+'_petrarolo_salt_2024');
+    const{error:upErr}=await sb.from('crm_utenti').update({password_hash:newHash,must_change_pwd:false}).eq('id',CU.id);
+    if(upErr){err.textContent='Errore: '+upErr.message;err.style.display='block';return;}
+    CU.must_change=false;localStorage.setItem('p_sess',JSON.stringify(CU));
+    showToast('Password aggiornata con successo!');
+    ['cp-old','cp-new1','cp-new2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  }catch(e){err.textContent='Errore: '+e.message;err.style.display='block';}
+}
+
+async function saveNewPwd(){
+  const p1=document.getElementById('cp-pwd1').value;
+  const p2=document.getElementById('cp-pwd2').value;
+  const err=document.getElementById('cp-err');err.style.display='none';
+  if(!p1||p1.length<6){showErr(err,'Password minimo 6 caratteri.');return;}
+  if(p1!==p2){showErr(err,'Le password non coincidono.');return;}
+  const btn=document.getElementById('cp-btn');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
+  try{
+    const hashed=btoa(p1+'_petrarolo_salt_2024');
+    const{error}=await sb.from('crm_utenti').update({password_hash:hashed,must_change_pwd:false,reset_token:null,reset_expiry:null}).eq('id',CU.id);
+    if(error)throw error;
+    CU.must_change=false;localStorage.setItem('p_sess',JSON.stringify(CU));
+    if(window._resetMode){await sb.from('crm_utenti').update({reset_token:null,reset_expiry:null}).eq('id',window._resetMode.uid);window._resetMode=null;window.history.replaceState({},'',window.location.pathname);}
+    document.getElementById('change-pwd-screen').style.display='none';
+    startApp();showToast('Password aggiornata con successo!');
+  }catch(e){showErr(err,'Errore: '+e.message);}
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva nuova password';
+}
+
+function showChangePwd(){document.getElementById('change-pwd-screen').style.display='flex';}
+
+async function salvaNuovoCliente(){
+  const nome=document.getElementById('nc-nome').value.trim();
+  const tel=document.getElementById('nc-tel').value.trim();
+  const err=document.getElementById('nc-err');
+  const btn=document.getElementById('save-nc-btn');
+  err.style.display='none';
+  if(!nome||!tel){showErr(err,'Inserisci nome e telefono.');return;}
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
+  try{
+    const{data,error}=await sb.from('clienti').insert({
+      nome,tipo:document.getElementById('nc-tipo').value,tel,
+      email:document.getElementById('nc-email').value,
+      citta:document.getElementById('nc-citta').value,
+      venditore_id:CU.id,venditore_nome:CU.nome,
+      stato:'Attivo',stato_lead:'Vinta',score:70,
+      note:document.getElementById('nc-note').value,created_by:CU.nome
+    });
+    if(error)throw error;
+    const modello=document.getElementById('nc-modello').value.trim();
+    const targa=document.getElementById('nc-targa').value.trim();
+    const scadenza=document.getElementById('nc-scadenza').value;
+    if(modello&&data&&data[0]){
+      let cat=document.getElementById('nc-categoria').value;
+      if(cat==='altro')cat=document.getElementById('nc-cat-custom').value;
+      await sb.from('flotta_veicoli').insert({cliente_id:data[0].id,cliente_nome:nome,modello,targa:targa.toUpperCase(),categoria:cat,tipo_contratto:document.getElementById('nc-contratto').value,data_scadenza:scadenza||null,venditore_id:CU.id,venditore_nome:CU.nome});
+    }
+    closeModal('modal-nuovo-cliente-flotta');
+    showToast('Cliente salvato!');renderSec('flotta');
+  }catch(e){showErr(err,'Errore: '+e.message);}
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva cliente';
+}
+
+async function salvaVeicolo(){
+  const clienteId=document.getElementById('v-cliente').value;
+  const modello=document.getElementById('v-modello').value.trim();
+  const targa=document.getElementById('v-targa').value.trim();
+  const scadenza=document.getElementById('v-scadenza').value;
+  const err=document.getElementById('v-err');
+  const btn=document.getElementById('save-v-btn');
+  err.style.display='none';
+  if(!clienteId||!modello||!targa||!scadenza){showErr(err,'Compila i campi obbligatori.');return;}
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
+  try{
+    const{data:cd}=await sb.from('clienti').select('nome').eq('id',clienteId).single();
+    let cat=document.getElementById('v-categoria').value;
+    if(cat==='altro')cat=document.getElementById('v-cat-custom').value;
+    const{error}=await sb.from('flotta_veicoli').insert({
+      cliente_id:parseInt(clienteId),cliente_nome:cd?.nome||'—',modello,targa:targa.toUpperCase(),
+      categoria:cat,tipo_contratto:document.getElementById('v-contratto').value,
+      data_inizio:document.getElementById('v-inizio').value||null,
+      data_scadenza:scadenza,durata_mesi:parseInt(document.getElementById('v-durata').value)||null,
+      note:document.getElementById('v-note').value||null,venditore_id:CU.id,venditore_nome:CU.nome
+    });
+    if(error)throw error;
+    closeModal('modal-veicolo');showToast('Veicolo aggiunto!');
+    ['v-modello','v-targa','v-durata','v-note','v-inizio','v-scadenza'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('v-cliente').value='';document.getElementById('v-categoria').value='';
+    renderSec('flotta');
+  }catch(e){showErr(err,'Errore: '+e.message);}
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva veicolo';
+}
+
+function toggleAltroV(v){
+  const g=document.getElementById('v-cat-altro');
+  if(g){g.style.display=v==='altro'?'flex':'none';g.style.flexDirection='column';g.style.gap='4px';}
+}
+
+async function stampaMese(mese){window.print();}
+async function esportaReport(){window.print();}
 
 
 function toggleMobileMenu(){var sb=document.querySelector('.sb'),ov=document.getElementById('mobile-overlay');if(sb)sb.classList.toggle('mobile-open');if(ov)ov.classList.toggle('active');}
