@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -588,6 +589,35 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
   </div>
 </div>
 
+<!-- MODAL CAMBIA STATO LEAD -->
+<div class="modal-overlay" id="modal-cambia-stato">
+  <div class="modal" style="width:480px">
+    <div class="modal-head"><span class="modal-title"><i class="ti ti-tag" style="color:var(--orange);margin-right:7px"></i>Cambia stato lead</span><button class="modal-close" onclick="closeModal('modal-cambia-stato')"><i class="ti ti-x"></i></button></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div class="form-group"><div class="form-label">Nuovo stato <span class="form-req">*</span></div>
+        <select id="cs-stato" onchange="toggleCambioStatoFields(this.value)" style="font-size:13px;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;width:100%"></select>
+      </div>
+      <div class="form-group" id="cs-motiv-grp" style="display:none;flex-direction:column;gap:4px">
+        <div class="form-label">Motivazione <span class="form-req">*</span></div>
+        <textarea id="cs-motivazione" placeholder="Spiega perché la lead non si è chiusa positivamente..." style="font-size:12.5px;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;width:100%;min-height:70px;font-family:inherit;resize:vertical"></textarea>
+      </div>
+      <div class="form-group" id="cs-conc-grp" style="display:none;flex-direction:column;gap:4px">
+        <div class="form-label">Nome concorrente</div>
+        <input id="cs-concorrente" type="text" placeholder="es. Leaseplan, Arval diretta, altro dealer..." style="font-size:12.5px;padding:8px 10px;border:1px solid var(--border2);border-radius:7px;width:100%">
+      </div>
+      <div class="form-group" id="cs-pdf-conc-grp" style="display:none;flex-direction:column;gap:4px">
+        <div class="form-label">Allega preventivo concorrenza (PDF, per confronto futuro)</div>
+        <input id="cs-pdf-conc" type="file" accept=".pdf" style="font-size:12px;padding:5px;border:1px solid var(--border2);border-radius:7px;width:100%">
+        <div style="font-size:11px;color:var(--text3)">Conservato per analisi comparative future</div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('modal-cambia-stato')">Annulla</button>
+      <button class="btn btn-orange" id="cs-save-btn" onclick="salvaCambioStato()"><i class="ti ti-check"></i> Salva</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL NOTIFICHE -->
 <div class="modal-overlay" id="modal-notifiche" style="align-items:flex-start;padding-top:60px">
   <div class="modal" style="width:480px;max-height:70vh;display:flex;flex-direction:column">
@@ -781,6 +811,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div class="sb-sec">Analisi</div>
       <div class="ni" data-sec="report"><i class="ti ti-report-analytics"></i> Report &amp; KPI</div>
       <div class="ni" data-sec="contratti"><i class="ti ti-file-invoice"></i> Report Contratti</div>
+      <div class="ni" data-sec="report-lead"><i class="ti ti-chart-pie"></i> Report Lead</div>
       <div class="ni dir-only" data-sec="dir-overview"><i class="ti ti-eye"></i> Vista Direzione <span class="bnew">DIR</span></div>
       <div class="sb-sec">AI &amp; Strumenti</div>
       <div class="ni" data-sec="ai"><i class="ti ti-sparkles"></i> AI Assistant <span class="bnew">AI</span></div>
@@ -1464,6 +1495,193 @@ async function popolaVenditoriAssegna(){
 }
 
 
+// ═══════════════════════════════════════════
+// REPORT LEAD — PIPELINE & CONVERSIONI
+// ═══════════════════════════════════════════
+const STATI_LEAD = ['Nuova','In lavorazione','Preventivo inviato','Vinta','Non convertita — Cliente ha rifiutato','Persa — Cliente ha scelto concorrente','In pausa — Cliente ha rimandato'];
+const STATO_COLORS = {
+  'Nuova':'#FAEEDA','In lavorazione':'#E6F1FB','Preventivo inviato':'#FDF0E8','Vinta':'#EAF3DE',
+  'Non convertita — Cliente ha rifiutato':'#FCEBEB','Persa — Cliente ha scelto concorrente':'#FCEBEB','In pausa — Cliente ha rimandato':'#F1EFE8'
+};
+const STATO_TEXT = {
+  'Nuova':'#854F0B','In lavorazione':'#0C447C','Preventivo inviato':'#993C1D','Vinta':'#3B6D11',
+  'Non convertita — Cliente ha rifiutato':'#991B1B','Persa — Cliente ha scelto concorrente':'#991B1B','In pausa — Cliente ha rimandato':'#5F5E5A'
+};
+
+async function rReportLead(){
+  let leads=[];
+  try{
+    let q=sb.from('clienti').select('*').order('created_at',{ascending:false});
+    if(!canViewAll())q=q.eq('venditore_id',CU.id);
+    const{data}=await q;leads=data||[];
+  }catch(e){}
+  const oggi=new Date();
+  const meseCorrente=oggi.toISOString().slice(0,7);
+  const totali={};STATI_LEAD.forEach(s=>totali[s]=0);
+  leads.forEach(l=>{const s=l.stato_lead||'Nuova';if(totali[s]!==undefined)totali[s]++;else totali['Nuova']++;});
+  const totLead=leads.length;
+  const vinte=totali['Vinta']||0;
+  const perse=(totali['Non convertita — Cliente ha rifiutato']||0)+(totali['Persa — Cliente ha scelto concorrente']||0);
+  const tassoConv=totLead>0?Math.round(vinte/totLead*100):0;
+  const leadsThisMese=leads.filter(l=>l.created_at&&l.created_at.slice(0,7)===meseCorrente);
+  const vinteThisMese=leadsThisMese.filter(l=>l.stato_lead==='Vinta').length;
+  const byVend={};
+  leads.forEach(l=>{
+    const v=l.venditore_nome||'—';
+    if(!byVend[v])byVend[v]={totale:0,vinte:0,perse:0,inCorso:0};
+    byVend[v].totale++;
+    const s=l.stato_lead||'Nuova';
+    if(s==='Vinta')byVend[v].vinte++;
+    else if(s.includes('rifiutato')||s.includes('concorrente'))byVend[v].perse++;
+    else byVend[v].inCorso++;
+  });
+  document.getElementById('content').innerHTML=`
+  <div class="kpi-g">
+    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Lead totali</div><div class="kpi-v">${totLead}</div><div class="kpi-d" style="color:var(--text3)">Storico completo</div></div>
+    <div class="kpi" style="border-top-color:#166534"><div class="kpi-l">Lead vinte</div><div class="kpi-v" style="color:#166534">${vinte}</div><div class="kpi-d" style="color:#166534">Contratti chiusi</div></div>
+    <div class="kpi" style="border-top-color:#991B1B"><div class="kpi-l">Lead perse</div><div class="kpi-v" style="color:#991B1B">${perse}</div><div class="kpi-d" style="color:#991B1B">Non convertite</div></div>
+    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Tasso conversione</div><div class="kpi-v">${tassoConv}%</div><div class="kpi-d" style="color:${tassoConv>=30?'var(--green)':'var(--orange)'}">${vinteThisMese} vinte questo mese</div></div>
+  </div>
+  <div class="row2">
+    <div class="card">
+      <div class="card-head"><span class="card-title"><i class="ti ti-chart-pie" style="color:var(--orange);margin-right:6px"></i>Pipeline per stato</span></div>
+      <div style="padding:16px">
+        ${STATI_LEAD.map(s=>{const n=totali[s]||0;const perc=totLead>0?Math.round(n/totLead*100):0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:${STATO_TEXT[s]}">${s.split(' — ')[0]}</span><span style="font-size:12px;color:var(--text2)">${n} (${perc}%)</span></div><div style="height:8px;background:var(--gray2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${perc}%;background:${STATO_TEXT[s]};border-radius:4px"></div></div></div>`;}).join('')}
+      </div>
+    </div>
+    ${isDir()?`<div class="card">
+      <div class="card-head"><span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Performance per venditore</span></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Venditore</th><th>Totale</th><th>Vinte</th><th>Perse</th><th>In corso</th><th>Conv.%</th></tr></thead><tbody>
+      ${Object.entries(byVend).sort((a,b)=>b[1].vinte-a[1].vinte).map(([nome,s])=>`<tr><td style="font-weight:600">${nome}</td><td style="text-align:center">${s.totale}</td><td style="text-align:center;color:#166534;font-weight:600">${s.vinte}</td><td style="text-align:center;color:#991B1B">${s.perse}</td><td style="text-align:center;color:var(--orange)">${s.inCorso}</td><td style="text-align:center;font-weight:700">${s.totale>0?Math.round(s.vinte/s.totale*100):0}%</td></tr>`).join('')}
+      </tbody></table></div>
+    </div>`:'<div></div>'}
+  </div>
+  <div class="full-card">
+    <div class="card-head">
+      <span class="card-title"><i class="ti ti-list" style="color:var(--orange);margin-right:6px"></i>Tutte le lead — ${totLead} totali</span>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <select id="rl-stato" class="btn btn-sm" style="cursor:pointer" onchange="filtroLead()"><option value="">Tutti gli stati</option>${STATI_LEAD.map(s=>`<option value="${s}">${s.split(' — ')[0]}</option>`).join('')}</select>
+        <select id="rl-venditore" class="btn btn-sm" style="cursor:pointer;${isDir()?'':'display:none'}" onchange="filtroLead()"><option value="">Tutti i venditori</option></select>
+        <input id="rl-dal" type="date" class="btn btn-sm" onchange="filtroLead()" title="Dal">
+        <input id="rl-al" type="date" class="btn btn-sm" onchange="filtroLead()" title="Al">
+        <button class="btn btn-sm" onclick="esportaLeadExcel()"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+        <button class="btn btn-sm" onclick="esportaLeadPdf()"><i class="ti ti-file-type-pdf"></i> PDF</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table class="tbl" id="rl-table"><thead><tr><th>Cliente</th><th>Città</th><th>Venditore</th><th>Provenienza</th><th>Stato</th><th>Data apertura</th><th>Azioni</th></tr></thead>
+    <tbody id="rl-tbody">
+    ${leads.map(l=>`<tr><td style="font-weight:600">${l.nome||'—'}</td><td style="color:var(--text2)">${l.citta||'—'}</td><td style="font-size:11.5px">${l.venditore_nome||'—'}</td><td style="font-size:11px">${(l.fonte||'—').replace('LEAD DA ','')}</td><td><span style="background:${STATO_COLORS[l.stato_lead]||'#F4F5F7'};color:${STATO_TEXT[l.stato_lead]||'#4A5568'};padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:500">${(l.stato_lead||'Nuova').split(' — ')[0]}</span></td><td style="font-size:11px;color:var(--text3)">${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</td><td><div style="display:flex;gap:4px"><button class="btn btn-sm" onclick="cambiaStatoLead(${l.id},'${(l.stato_lead||'Nuova').replace(/'/g,\'\\'\'')}')" title="Cambia stato"><i class="ti ti-tag"></i></button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${l.id};window._currentTimelineNome='${(l.nome||'').replace(/'/g,\'\\'\'') }';openTimeline(${l.id})" title="Timeline"><i class="ti ti-timeline"></i></button></div></td></tr>`).join('')}
+    </tbody></table></div>
+  </div>`;
+  setTimeout(async()=>{
+    const sel=document.getElementById('rl-venditore');if(!sel)return;
+    try{const{data}=await sb.from('crm_utenti').select('id,nome').eq('attivo',true).eq('ruolo','venditore').order('nome');
+    if(data)data.forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.nome;sel.appendChild(o);});}catch(e){}
+  },200);
+}
+
+async function filtroLead(){
+  const stato=document.getElementById('rl-stato')?.value||'';
+  const vend=document.getElementById('rl-venditore')?.value||'';
+  const dal=document.getElementById('rl-dal')?.value||'';
+  const al=document.getElementById('rl-al')?.value||'';
+  let q=sb.from('clienti').select('*').order('created_at',{ascending:false});
+  if(!canViewAll())q=q.eq('venditore_id',CU.id);
+  if(stato)q=q.eq('stato_lead',stato);
+  if(vend)q=q.eq('venditore_id',parseInt(vend));
+  if(dal)q=q.gte('created_at',dal);
+  if(al)q=q.lte('created_at',al+'T23:59:59');
+  const{data}=await q;const leads=data||[];
+  const tbody=document.getElementById('rl-tbody');if(!tbody)return;
+  tbody.innerHTML=leads.map(l=>`<tr><td style="font-weight:600">${l.nome||'—'}</td><td style="color:var(--text2)">${l.citta||'—'}</td><td style="font-size:11.5px">${l.venditore_nome||'—'}</td><td style="font-size:11px">${(l.fonte||'—').replace('LEAD DA ','')}</td><td><span style="background:${STATO_COLORS[l.stato_lead]||'#F4F5F7'};color:${STATO_TEXT[l.stato_lead]||'#4A5568'};padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:500">${(l.stato_lead||'Nuova').split(' — ')[0]}</span></td><td style="font-size:11px;color:var(--text3)">${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</td><td><div style="display:flex;gap:4px"><button class="btn btn-sm" onclick="cambiaStatoLead(${l.id},'${(l.stato_lead||'Nuova').replace(/'/g,\'\\'\'')}')" title="Cambia stato"><i class="ti ti-tag"></i></button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${l.id};window._currentTimelineNome='${(l.nome||'').replace(/'/g,\'\\'\'') }';openTimeline(${l.id})" title="Timeline"><i class="ti ti-timeline"></i></button></div></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">Nessuna lead trovata</td></tr>';
+}
+
+async function cambiaStatoLead(id, statoAttuale){
+  window._cambiaStatoId=id;
+  const sel=document.getElementById('cs-stato');
+  if(sel){sel.innerHTML=STATI_LEAD.map(s=>`<option value="${s}" ${s===statoAttuale?'selected':''}>${s}</option>`).join('');toggleCambioStatoFields(sel.value);}
+  const motEl=document.getElementById('cs-motivazione');if(motEl)motEl.value='';
+  const pdfEl=document.getElementById('cs-pdf-conc');if(pdfEl)pdfEl.value='';
+  const concEl=document.getElementById('cs-concorrente');if(concEl)concEl.value='';
+  openModal('modal-cambia-stato');
+}
+
+function toggleCambioStatoFields(stato){
+  const isNeg=stato.includes('rifiutato')||stato.includes('concorrente')||stato.includes('rimandato');
+  ['cs-motiv-grp','cs-conc-grp','cs-pdf-conc-grp'].forEach((id,i)=>{
+    const el=document.getElementById(id);if(!el)return;
+    const show=i===0?isNeg:i===1?stato.includes('concorrente'):stato.includes('concorrente');
+    el.style.display=show?'flex':'none';el.style.flexDirection='column';el.style.gap='4px';
+  });
+}
+
+async function salvaCambioStato(){
+  const id=window._cambiaStatoId;
+  const stato=document.getElementById('cs-stato')?.value;
+  const motiv=document.getElementById('cs-motivazione')?.value.trim();
+  const conc=document.getElementById('cs-concorrente')?.value.trim();
+  if(!stato)return;
+  const btn=document.getElementById('cs-save-btn');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
+  let pdfConcUrl=null;
+  const pdfFile=document.getElementById('cs-pdf-conc')?.files[0];
+  if(pdfFile){
+    try{
+      const fname='conc_'+Date.now()+'_'+pdfFile.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const sbUrl=localStorage.getItem('p_url');const sbKey=localStorage.getItem('p_key');
+      const res=await fetch(sbUrl+'/storage/v1/object/preventivi-pdf/'+fname,{method:'POST',headers:{'Authorization':'Bearer '+sbKey,'apikey':sbKey,'Content-Type':'application/pdf','x-upsert':'true'},body:pdfFile});
+      if(res.ok)pdfConcUrl=sbUrl+'/storage/v1/object/public/preventivi-pdf/'+fname;
+    }catch(e){}
+  }
+  try{
+    await sb.from('clienti').update({stato_lead:stato,stato:stato==='Vinta'?'Attivo':stato.includes('rifiutato')||stato.includes('concorrente')||stato.includes('rimandato')?'Perso':'Lead',note_chiusura:motiv||null,concorrente:conc||null,pdf_concorrenza:pdfConcUrl||null}).eq('id',id);
+    await sb.from('lead_attivita').insert({cliente_id:id,tipo:'Nota interna',descrizione:'Stato aggiornato: '+stato+(motiv?' — '+motiv:'')+(conc?' — Concorrente: '+conc:''),venditore_id:CU.id,venditore_nome:CU.nome});
+    closeModal('modal-cambia-stato');
+    showToast('Stato aggiornato: '+stato.split(' — ')[0]);
+    if(document.getElementById('rl-tbody'))filtroLead();else renderSec('report-lead');
+  }catch(e){showToast('Errore: '+e.message);}
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva';
+}
+
+async function esportaLeadExcel(){
+  let leads=[];
+  try{
+    let q=sb.from('clienti').select('*').order('created_at',{ascending:false});
+    if(!canViewAll())q=q.eq('venditore_id',CU.id);
+    const stato=document.getElementById('rl-stato')?.value||'';
+    const vend=document.getElementById('rl-venditore')?.value||'';
+    const dal=document.getElementById('rl-dal')?.value||'';
+    const al=document.getElementById('rl-al')?.value||'';
+    if(stato)q=q.eq('stato_lead',stato);if(vend)q=q.eq('venditore_id',parseInt(vend));
+    if(dal)q=q.gte('created_at',dal);if(al)q=q.lte('created_at',al+'T23:59:59');
+    const{data}=await q;leads=data||[];
+  }catch(e){showToast('Errore');return;}
+  if(!leads.length){showToast('Nessuna lead');return;}
+  const hdrs=['Data','Cliente','Città','Venditore','Tipo','Telefono','Email','Provenienza','Stato','Motivazione','Concorrente','Note'];
+  const rows=leads.map(l=>[l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'',l.nome||'',l.citta||'',l.venditore_nome||'',l.tipo||'',l.tel||'',l.email||'',(l.fonte||'').replace('LEAD DA ',''),l.stato_lead||'',l.note_chiusura||'',l.concorrente||'',l.note||'']);
+  const vinte=leads.filter(l=>l.stato_lead==='Vinta').length;
+  rows.push(['','','','','','','','','TOTALE: '+leads.length+' | Vinte: '+vinte+' | Conv: '+Math.round(vinte/Math.max(leads.length,1)*100)+'%','','','']);
+  const BOM='﻿';
+  const csv=[hdrs,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('
+');
+  const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='Report_Lead_'+(isDir()?'Team':CU.nome.replace(/ /g,'_'))+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(url);showToast('Report Lead Excel esportato!');
+}
+
+function esportaLeadPdf(){
+  const dal=document.getElementById('rl-dal')?.value||'';
+  const al=document.getElementById('rl-al')?.value||'';
+  const stato=document.getElementById('rl-stato')?.value||'Tutti gli stati';
+  const printWin=window.open('','_blank','width=900,height=700');
+  const table=document.getElementById('rl-table');
+  if(!table){showToast('Nessuna tabella');return;}
+  printWin.document.write('<!DOCTYPE html><html><head><title>Report Lead</title><style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px}h1{font-size:16px}table{width:100%;border-collapse:collapse}th{background:#1E2D3D;color:#fff;padding:6px 8px;text-align:left;font-size:10px}td{padding:5px 8px;border-bottom:1px solid #eee;font-size:10px}</style></head><body><h1>Report Lead — Petrarolo & Co. SRL SB</h1><p style="font-size:11px;color:#666">Generato il '+new Date().toLocaleString('it-IT')+' · '+CU.nome+' · '+stato+(dal?' · Dal: '+dal:'')+(al?' · Al: '+al:'')+'</p>'+table.outerHTML+'<p style="text-align:right;font-size:10px;color:#666">Petrarolo & Co. SRL SB — Moving Solutions</p></body></html>');
+  printWin.document.close();printWin.focus();setTimeout(()=>{printWin.print();},500);
+}
+
+
 function toggleMobileMenu(){var sb=document.querySelector('.sb'),ov=document.getElementById('mobile-overlay');if(sb)sb.classList.toggle('mobile-open');if(ov)ov.classList.toggle('active');}
 function closeMobileMenu(){var sb=document.querySelector('.sb'),ov=document.getElementById('mobile-overlay');if(sb)sb.classList.remove('mobile-open');if(ov)ov.classList.remove('active');}
 
@@ -1500,7 +1718,7 @@ function setupNav() {
       document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
       el.classList.add('active');
       currentSec=sec;
-      const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
+      const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti','report-lead':'Report Lead',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
       document.getElementById('page-title').textContent=titles[sec]||sec;
       renderSec(sec);
     });
@@ -1511,7 +1729,7 @@ function navTo(sec) {
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   const el=document.querySelector(`.ni[data-sec="${sec}"]`);
   if(el)el.classList.add('active');
-  const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
+  const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti','report-lead':'Report Lead',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
   document.getElementById('page-title').textContent=titles[sec]||sec;
   currentSec=sec;
   renderSec(sec);
@@ -1520,7 +1738,7 @@ function navTo(sec) {
 async function renderSec(sec) {
   const c=document.getElementById('content');
   c.innerHTML='<div class="spinner"></div>';
-  const map={dashboard:rDash,clienti:rClienti,scheda:rScheda,veicoli:rVeicoli,trattative:rTrattative,report:rReport,contratti:rContratti,flotta:rFlotta,'dir-overview':rDirOverview,ai:rAI,agenda:rAgenda,attivita:rAttivita,utenti:rUtenti,impostazioni:rImpostazioni};
+  const map={dashboard:rDash,clienti:rClienti,scheda:rScheda,veicoli:rVeicoli,trattative:rTrattative,report:rReport,contratti:rContratti,'report-lead':rReportLead,flotta:rFlotta,'dir-overview':rDirOverview,ai:rAI,agenda:rAgenda,attivita:rAttivita,utenti:rUtenti,impostazioni:rImpostazioni};
   if(map[sec])await map[sec]();
   if(sec==='ai'){setTimeout(()=>{const b=document.getElementById('ai-msgs');if(b)b.scrollTop=b.scrollHeight;},60);bindAI();}
 }
