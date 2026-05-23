@@ -976,16 +976,142 @@ function rAI(){
   setTimeout(bindAI,100);
 }
 
-function rAgenda(){
+async function rAgenda(){
+  let attivita=[];
+  try{
+    let q=sb.from('lead_attivita').select('*,clienti(nome,citta,venditore_nome,venditore_id)').order('created_at',{ascending:false});
+    if(!canViewAll())q=q.eq('venditore_id',CU.id);
+    const{data}=await q;
+    attivita=data||[];
+  }catch(e){}
+
+  const oggi=new Date().toLocaleDateString('it-IT');
+  const mese=new Date().toISOString().slice(0,7);
+
+  // Raggruppa per tipo
+  const byTipo={};
+  attivita.forEach(a=>{
+    const t=a.tipo||'Altro';
+    if(!byTipo[t])byTipo[t]=0;byTipo[t]++;
+  });
+
+  const iconMap={'Chiamata telefonica':'ti-phone','Visita cliente':'ti-building','Email inviata':'ti-mail','Preventivo inviato':'ti-file-invoice','Appuntamento fissato':'ti-calendar','Nota interna':'ti-notes'};
+  const colMap={'Chiamata telefonica':'#E6F1FB','Visita cliente':'#EAF3DE','Email inviata':'#FBEAF0','Preventivo inviato':'#FAEEDA','Appuntamento fissato':'#E6F1FB','Nota interna':'var(--gray)'};
+  const txtMap={'Chiamata telefonica':'#0C447C','Visita cliente':'#3B6D11','Email inviata':'#993556','Preventivo inviato':'#854F0B','Appuntamento fissato':'#0C447C','Nota interna':'#5F5E5A'};
+
   document.getElementById('content').innerHTML=`
-  <div class="row2">
-    <div class="card"><div class="card-head"><span class="card-title"><i class="ti ti-calendar" style="color:var(--orange);margin-right:6px"></i>Oggi</span></div>
-      <div style="padding:30px;text-align:center;color:var(--text3)">Nessun appuntamento per oggi.</div>
+  <div class="kpi-g">
+    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Attività totali</div><div class="kpi-v">${attivita.length}</div><div class="kpi-d" style="color:var(--text3)">Storico completo</div></div>
+    <div class="kpi" style="border-top-color:#0C447C"><div class="kpi-l">Chiamate</div><div class="kpi-v" style="color:#0C447C">${byTipo['Chiamata telefonica']||0}</div><div class="kpi-d" style="color:var(--text3)">Totale effettuate</div></div>
+    <div class="kpi" style="border-top-color:#854F0B"><div class="kpi-l">Preventivi</div><div class="kpi-v" style="color:#854F0B">${byTipo['Preventivo inviato']||0}</div><div class="kpi-d" style="color:var(--text3)">Totale inviati</div></div>
+    <div class="kpi" style="border-top-color:#3B6D11"><div class="kpi-l">Visite</div><div class="kpi-v" style="color:#3B6D11">${byTipo['Visita cliente']||0}</div><div class="kpi-d" style="color:var(--text3)">Totale effettuate</div></div>
+  </div>
+
+  <div class="full-card">
+    <div class="card-head">
+      <span class="card-title"><i class="ti ti-timeline" style="color:var(--orange);margin-right:6px"></i>Tutte le attività${isDir()?' — team':''}</span>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <select id="ag-tipo" class="btn btn-sm" style="cursor:pointer" onchange="filtroAgenda()">
+          <option value="">Tutti i tipi</option>
+          ${Object.keys(iconMap).map(t=>`<option value="${t}">${t}</option>`).join('')}
+        </select>
+        ${isDir()?`<select id="ag-vend" class="btn btn-sm" style="cursor:pointer" onchange="filtroAgenda()"><option value="">Tutti i venditori</option></select>`:''}
+        <input id="ag-dal" type="date" class="btn btn-sm" onchange="filtroAgenda()" title="Dal">
+        <input id="ag-al" type="date" class="btn btn-sm" onchange="filtroAgenda()" title="Al">
+        <button class="btn btn-sm" onclick="esportaAgendaExcel()"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+      </div>
     </div>
-    <div class="card"><div class="card-head"><span class="card-title">Prossimi 7 giorni</span></div>
-      <div style="padding:30px;text-align:center;color:var(--text3)">Nessun appuntamento pianificato.</div>
+    <div id="ag-list" style="max-height:600px;overflow-y:auto">
+      ${attivita.map(a=>`<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start">
+        <div style="width:32px;height:32px;border-radius:50%;background:${colMap[a.tipo]||'var(--gray)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="ti ${iconMap[a.tipo]||'ti-notes'}" style="font-size:14px;color:${txtMap[a.tipo]||'var(--navy)'}"></i>
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+            <span style="font-size:12.5px;font-weight:700">${a.tipo}</span>
+            <span style="font-size:11px;background:var(--gray);padding:1px 7px;border-radius:99px;color:var(--text2)">${a.cliente_nome||a.clienti?.nome||'—'}</span>
+            ${isDir()?`<span style="font-size:10.5px;color:var(--text3)">${a.venditore_nome||'—'}</span>`:''}
+            <span style="font-size:10.5px;color:var(--text3);margin-left:auto">${new Date(a.created_at).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+          </div>
+          ${a.descrizione?`<div style="font-size:12px;color:var(--text2);margin-bottom:4px">${a.descrizione}</div>`:''}
+          ${a.risposta_cliente?`<div style="font-size:11.5px;color:var(--text);background:var(--orange-light,#FFF7ED);border-left:2px solid var(--orange);padding:5px 9px;border-radius:0 5px 5px 0"><span style="font-size:10px;color:var(--orange);font-weight:600">RISPOSTA: </span>${a.risposta_cliente}</div>`:''}
+          ${a.tipo_preventivo?`<div style="margin-top:5px;display:flex;align-items:center;gap:7px">${badge(a.tipo_preventivo,'bg-go')}${a.importo_preventivo?`<span style="font-size:12px;font-weight:700;color:var(--orange)">€ ${parseFloat(a.importo_preventivo).toLocaleString('it-IT')}</span>`:''}${a.pdf_url?`<a href="${a.pdf_url}" target="_blank" class="btn btn-sm" style="padding:2px 7px;font-size:10px"><i class="ti ti-file-type-pdf"></i> PDF</a>`:''}</div>`:''}
+        </div>
+      </div>`).join('')}
+      ${attivita.length===0?`<div style="padding:40px;text-align:center;color:var(--text3)"><i class="ti ti-calendar-off" style="font-size:32px;display:block;margin-bottom:8px"></i>Nessuna attività registrata</div>`:''}
     </div>
-  </div>`;}
+  </div>`;
+
+  // Popola venditori
+  setTimeout(async()=>{
+    const sel=document.getElementById('ag-vend');if(!sel)return;
+    try{const{data}=await sb.from('crm_utenti').select('id,nome').eq('attivo',true).eq('ruolo','venditore').order('nome');
+    if(data)data.forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.nome;sel.appendChild(o);});}catch(e){}
+  },200);
+}
+
+async function filtroAgenda(){
+  const tipo=document.getElementById('ag-tipo')?.value||'';
+  const vend=document.getElementById('ag-vend')?.value||'';
+  const dal=document.getElementById('ag-dal')?.value||'';
+  const al=document.getElementById('ag-al')?.value||'';
+  let q=sb.from('lead_attivita').select('*').order('created_at',{ascending:false});
+  if(!canViewAll())q=q.eq('venditore_id',CU.id);
+  if(tipo)q=q.eq('tipo',tipo);
+  if(vend)q=q.eq('venditore_id',parseInt(vend));
+  if(dal)q=q.gte('created_at',dal);
+  if(al)q=q.lte('created_at',al+'T23:59:59');
+  const{data}=await q;const attivita=data||[];
+  const iconMap={'Chiamata telefonica':'ti-phone','Visita cliente':'ti-building','Email inviata':'ti-mail','Preventivo inviato':'ti-file-invoice','Appuntamento fissato':'ti-calendar','Nota interna':'ti-notes'};
+  const colMap={'Chiamata telefonica':'#E6F1FB','Visita cliente':'#EAF3DE','Email inviata':'#FBEAF0','Preventivo inviato':'#FAEEDA','Appuntamento fissato':'#E6F1FB','Nota interna':'var(--gray)'};
+  const txtMap={'Chiamata telefonica':'#0C447C','Visita cliente':'#3B6D11','Email inviata':'#993556','Preventivo inviato':'#854F0B','Appuntamento fissato':'#0C447C','Nota interna':'#5F5E5A'};
+  const list=document.getElementById('ag-list');if(!list)return;
+  list.innerHTML=attivita.map(a=>`<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start">
+    <div style="width:32px;height:32px;border-radius:50%;background:${colMap[a.tipo]||'var(--gray)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <i class="ti ${iconMap[a.tipo]||'ti-notes'}" style="font-size:14px;color:${txtMap[a.tipo]||'var(--navy)'}"></i>
+    </div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+        <span style="font-size:12.5px;font-weight:700">${a.tipo}</span>
+        <span style="font-size:11px;background:var(--gray);padding:1px 7px;border-radius:99px;color:var(--text2)">${a.cliente_nome||'—'}</span>
+        ${isDir()?`<span style="font-size:10.5px;color:var(--text3)">${a.venditore_nome||'—'}</span>`:''}
+        <span style="font-size:10.5px;color:var(--text3);margin-left:auto">${new Date(a.created_at).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+      </div>
+      ${a.descrizione?`<div style="font-size:12px;color:var(--text2)">${a.descrizione}</div>`:''}
+      ${a.risposta_cliente?`<div style="font-size:11.5px;background:var(--gray);border-left:2px solid var(--orange);padding:5px 9px;margin-top:4px;border-radius:0 5px 5px 0"><span style="font-size:10px;color:var(--orange);font-weight:600">RISPOSTA: </span>${a.risposta_cliente}</div>`:''}
+    </div>
+  </div>`).join('')||'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna attività trovata</div>';
+}
+
+async function esportaAgendaExcel(){
+  let q=sb.from('lead_attivita').select('*').order('created_at',{ascending:false});
+  if(!canViewAll())q=q.eq('venditore_id',CU.id);
+  const tipo=document.getElementById('ag-tipo')?.value||'';
+  const vend=document.getElementById('ag-vend')?.value||'';
+  const dal=document.getElementById('ag-dal')?.value||'';
+  const al=document.getElementById('ag-al')?.value||'';
+  if(tipo)q=q.eq('tipo',tipo);if(vend)q=q.eq('venditore_id',parseInt(vend));
+  if(dal)q=q.gte('created_at',dal);if(al)q=q.lte('created_at',al+'T23:59:59');
+  const{data}=await q;const att=data||[];
+  if(!att.length){showToast('Nessuna attività');return;}
+  const hdrs=['Data','Ora','Tipo','Cliente','Venditore','Descrizione','Risposta Cliente','Tipo Preventivo','Importo €'];
+  const sep=';';const qt='"';const esc=v=>qt+String(v||'').replace(new RegExp(qt,'g'),qt+qt)+qt;
+  const rows=att.map(a=>[
+    new Date(a.created_at).toLocaleDateString('it-IT'),
+    new Date(a.created_at).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),
+    a.tipo||'',a.cliente_nome||'',a.venditore_nome||'',
+    a.descrizione||'',a.risposta_cliente||'',a.tipo_preventivo||'',
+    a.importo_preventivo||''
+  ].map(esc).join(sep));
+  const BOM='﻿';
+  const csv=BOM+[hdrs.map(esc).join(sep),...rows].join('
+');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='Agenda_Attivita_'+(isDir()?'Team':CU.nome.replace(/ /g,'_'))+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(url);showToast('Agenda esportata!');
+}
+
 
 async function rAttivita(){
   let data=[];
@@ -1729,6 +1855,8 @@ async function startApp(){
   setInterval(refreshOnlineCount,15000);
   setInterval(aggiornaContatorNotifiche,30000);
   setTimeout(aggiornaContatorNotifiche,2000);
+  // Controlla lead in pausa da 30+ giorni
+  setTimeout(controllLeadInPausa,5000);
   renderSec('dashboard');
 }
 
@@ -1875,6 +2003,28 @@ function tempoGestione(dataAssegnazione, ultimaAttivita){
 }
 
 
+async function controllLeadInPausa(){
+  if(!CU)return;
+  try{
+    let q=sb.from('clienti').select('id,nome,data_assegnazione,venditore_id').like('stato_lead','%rimandato%');
+    if(!isDir())q=q.eq('venditore_id',CU.id);
+    const{data}=await q;
+    if(!data)return;
+    const scadute=data.filter(c=>{
+      if(!c.data_assegnazione)return false;
+      return Math.floor((Date.now()-new Date(c.data_assegnazione).getTime())/(1000*60*60*24))>=30;
+    });
+    for(const lead of scadute){
+      // Controlla se esiste già notifica recente
+      const{data:exist}=await sb.from('notifiche').select('id').eq('utente_id',lead.venditore_id).eq('lead_id',lead.id).eq('tipo','promemoria_pausa').gte('created_at',new Date(Date.now()-7*24*60*60*1000).toISOString());
+      if(!exist||!exist.length){
+        await inviaNotifica(lead.venditore_id,'promemoria_pausa',`⏰ Promemoria: la lead "${lead.nome}" è in pausa da 30+ giorni. È il momento di ricontattare!`,lead.id,lead.nome);
+      }
+    }
+  }catch(e){}
+}
+
+
 function toggleMobileMenu(){var sb=document.querySelector('.sb'),ov=document.getElementById('mobile-overlay');if(sb)sb.classList.toggle('mobile-open');if(ov)ov.classList.toggle('active');}
 function closeMobileMenu(){var sb=document.querySelector('.sb'),ov=document.getElementById('mobile-overlay');if(sb)sb.classList.remove('mobile-open');if(ov)ov.classList.remove('active');}
 
@@ -1966,53 +2116,110 @@ function togglePwd(id,btn){const i=document.getElementById(id);i.type=i.type==='
 // DASHBOARD
 // ═══════════════════════════════════════════
 async function rDash(){
-  let cl=[],tr=[];
+  let clienti=[],contratti=[],notifiche_non_lette=0;
   try{
-    const[r1,r2]=await Promise.all([queryClienti().limit(20),queryTrattative().limit(10)]);
-    cl=r1.data||[];tr=r2.data||[];
+    const meseCorrente=new Date().toISOString().slice(0,7);
+    const[rc,rk,rn]=await Promise.all([
+      queryClienti(),
+      sb.from('contratti_chiusi').select('*').order('created_at',{ascending:false}),
+      sb.from('notifiche').select('id',{count:'exact'}).eq('utente_id',CU.id).eq('letta',false)
+    ]);
+    clienti=rc.data||[];
+    const allContratti=rk.data||[];
+    contratti=isDir()?allContratti:allContratti.filter(c=>c.venditore_id===CU.id);
+    notifiche_non_lette=rn.data?.length||0;
   }catch(e){}
-  const dirBanner = isDir()?`<div style="background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px">
-    <i class="ti ti-eye" style="color:var(--gold);font-size:20px"></i>
-    <div><div style="font-size:13px;font-weight:700;color:var(--gold)">Vista Direzione attiva</div><div style="font-size:12px;color:#854F0B">Stai visualizzando i dati di TUTTI i venditori. Clicca "Vista Direzione" nel menu per il pannello completo.</div></div>
-    <button class="btn btn-sm" style="margin-left:auto;border-color:var(--gold);color:var(--gold);flex-shrink:0" onclick="navTo('dir-overview')"><i class="ti ti-arrow-right"></i> Apri</button>
+
+  const oggi=new Date();
+  const meseCorrente=oggi.toISOString().slice(0,7);
+  const leads=clienti.filter(c=>c.stato==='Lead'||c.stato_lead==='Nuova'||c.stato_lead==='In lavorazione'||c.stato_lead==='Preventivo inviato');
+  const leadFredde=leads.filter(c=>{
+    if(!c.data_assegnazione)return false;
+    const giorni=Math.floor((Date.now()-new Date(c.data_assegnazione).getTime())/(1000*60*60*24));
+    return giorni>=7;
+  });
+  const leadPausa=clienti.filter(c=>c.stato_lead&&c.stato_lead.includes('rimandato')&&c.data_assegnazione&&Math.floor((Date.now()-new Date(c.data_assegnazione).getTime())/(1000*60*60*24))>=30);
+  const contrattiMese=contratti.filter(c=>c.mese===meseCorrente);
+  const pezziMese=contrattiMese.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
+  const margineMese=contrattiMese.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
+
+  const dirBanner=isDir()?`<div style="background:linear-gradient(135deg,#1E2D3D,#2d4a6b);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:0">
+    <i class="ti ti-eye" style="color:#E8530A;font-size:24px"></i>
+    <div><div style="font-size:14px;font-weight:700;color:#fff">Vista Direzione attiva</div>
+    <div style="font-size:11.5px;color:rgba(255,255,255,.6)">Stai vedendo i dati di tutto il team</div></div>
+    <button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)" onclick="navTo('dir-overview')"><i class="ti ti-arrow-right"></i> Vista Direzione</button>
   </div>`:'';
+
+  // Alert lead fredde
+  const alertFredde=leadFredde.length>0?`<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px">
+    <i class="ti ti-alert-triangle" style="color:#D97706;font-size:20px;flex-shrink:0"></i>
+    <div><div style="font-size:13px;font-weight:700;color:#92400E">${leadFredde.length} lead ${leadFredde.length===1?'fredda':'fredde'} — senza attività da 7+ giorni</div>
+    <div style="font-size:11.5px;color:#92400E;margin-top:2px">${leadFredde.slice(0,3).map(c=>c.nome).join(', ')}${leadFredde.length>3?` e altri ${leadFredde.length-3}`:''}
+    </div></div>
+    <button class="btn btn-sm" style="margin-left:auto;background:#D97706;color:#fff;border:none;flex-shrink:0" onclick="navTo('clienti')">Vedi lead</button>
+  </div>`:'';
+
+  const alertPausa=leadPausa.length>0?`<div style="background:#FEE2E2;border:1px solid #FCA5A5;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px">
+    <i class="ti ti-clock" style="color:#DC2626;font-size:20px;flex-shrink:0"></i>
+    <div><div style="font-size:13px;font-weight:700;color:#991B1B">${leadPausa.length} lead in pausa da 30+ giorni — da ricontattare</div>
+    <div style="font-size:11.5px;color:#991B1B;margin-top:2px">${leadPausa.slice(0,3).map(c=>c.nome).join(', ')}${leadPausa.length>3?` e altri ${leadPausa.length-3}`:''}</div></div>
+    <button class="btn btn-sm" style="margin-left:auto;background:#DC2626;color:#fff;border:none;flex-shrink:0" onclick="navTo('report-lead')">Gestisci</button>
+  </div>`:'';
+
   document.getElementById('content').innerHTML=`
-  ${dirBanner}
-  <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">${isDir()?'Clienti totali':'Miei clienti'}</div><div class="kpi-v">${cl.length}</div><div class="kpi-d du">Database live</div></div>
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">${isDir()?'Trattative totali':'Mie trattative'}</div><div class="kpi-v">${tr.length}</div><div class="kpi-d du">Aggiornato ora</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">In chiusura</div><div class="kpi-v">${tr.filter(t=>t.fase==='In chiusura').length}</div><div class="kpi-d du">Alta probabilità</div></div>
-    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Contratti inseriti</div><div class="kpi-v" id="kpi-contratti-dash">—</div><div class="kpi-d" style="color:var(--text3)">Database live</div></div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    ${dirBanner}
+    ${alertFredde}
+    ${alertPausa}
+    ${notifiche_non_lette>0?`<div style="background:#FFF7ED;border:1px solid #E8530A;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px">
+      <i class="ti ti-bell" style="color:#E8530A;font-size:20px"></i>
+      <div style="font-size:13px;font-weight:700;color:#993C1D">${notifiche_non_lette} notifiche non lette</div>
+      <button class="btn btn-sm btn-orange" style="margin-left:auto" onclick="apriNotifiche()">Vedi</button>
+    </div>`:''}
   </div>
+
+  <div class="kpi-g" style="margin-top:12px">
+    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">${isDir()?'Clienti totali':'I miei clienti'}</div><div class="kpi-v">${clienti.length}</div><div class="kpi-d" style="color:var(--text3)">${leads.length} lead attive</div></div>
+    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Lead fredde</div><div class="kpi-v" style="color:${leadFredde.length>0?'var(--red)':'var(--green)'}">${leadFredde.length}</div><div class="kpi-d" style="color:${leadFredde.length>0?'var(--red)':'var(--text3)'}">Senza attività 7+gg</div></div>
+    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Pezzi questo mese</div><div class="kpi-v">${pezziMese}</div><div class="kpi-d" style="color:var(--text3)">${contrattiMese.length} contratti</div></div>
+    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Margine questo mese</div><div class="kpi-v">€ ${margineMese.toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">${new Date().toLocaleString('it-IT',{month:'long',year:'numeric'})}</div></div>
+  </div>
+
   <div class="row2">
     <div class="card">
-      <div class="card-head"><span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Ultimi clienti</span><button class="btn btn-sm" onclick="navTo('clienti')">Tutti</button></div>
-      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Interesse</th>${isDir()?'<th>Venditore</th>':''}<th>Stato</th></tr></thead><tbody>
-      ${cl.slice(0,5).map(c=>`<tr onclick="openClient(${c.id})">
-        <td><div style="display:flex;align-items:center;gap:8px">${mav((c.nome||'').slice(0,2).toUpperCase())}<div><div style="font-weight:600">${c.nome}</div><div style="font-size:10.5px;color:var(--text3)">${c.email||''}</div></div></div></td>
-        <td style="color:var(--text2)">${c.interesse||'—'}</td>
-        ${isDir()?`<td style="font-size:11px;color:var(--text2)">${c.venditore_nome||'—'}</td>`:''}
-        <td>${stBadge(c.stato||'Lead')}</td>
-      </tr>`).join('')}
-      </tbody></table></div>
+      <div class="card-head"><span class="card-title"><i class="ti ti-clock-exclamation" style="color:var(--orange);margin-right:6px"></i>Lead da lavorare oggi</span></div>
+      <div style="padding:0">
+        ${leads.slice(0,8).map(c=>{
+          const giorni=c.data_assegnazione?Math.floor((Date.now()-new Date(c.data_assegnazione).getTime())/(1000*60*60*24)):0;
+          const color=giorni>=7?'var(--red)':giorni>=3?'var(--orange)':'var(--green)';
+          return`<div onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineNome='${(c.nome||'').replace(/'/g,'')}';openTimeline(${c.id})" style="padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='var(--gray)'" onmouseout="this.style.background=''">
+            ${mav((c.nome||'').slice(0,2).toUpperCase())}
+            <div style="flex:1"><div style="font-size:12.5px;font-weight:600">${c.nome}</div>
+            <div style="font-size:11px;color:var(--text2)">${c.citta||'—'} · ${c.interesse||'—'}</div></div>
+            <div style="text-align:right"><span style="color:${color};font-size:11px;font-weight:600">${giorni}gg</span>
+            <div style="font-size:10px;color:var(--text3)">${c.stato_lead||c.stato||'—'}</div></div>
+          </div>`;
+        }).join('')}
+        ${leads.length===0?'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna lead attiva</div>':''}
+        ${leads.length>8?`<div style="padding:10px;text-align:center"><button class="btn btn-sm" onclick="navTo('clienti')">Vedi tutte (${leads.length})</button></div>`:''}
+      </div>
     </div>
     <div class="card">
-      <div class="card-head"><span class="card-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:6px"></i>Trattative in corso</span></div>
-      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Valore</th><th>Fase</th><th>Prob.</th></tr></thead><tbody>
-      ${tr.slice(0,5).map(t=>`<tr>
-        <td style="font-weight:600">${t.cliente_nome||'—'}</td>
-        <td style="color:var(--navy);font-weight:700">${t.valore||'—'}</td>
-        <td>${badge(t.fase||'—',t.fase==='In chiusura'?'bg-go':t.fase==='Proposta'?'bg-o':'bg-gr')}</td>
-        <td><div style="display:flex;align-items:center;gap:5px">${prog(t.probabilita||0,'var(--orange)')}<span style="font-size:11px;font-weight:700">${t.probabilita||0}%</span></div></td>
-      </tr>`).join('')}
-      </tbody></table></div>
+      <div class="card-head"><span class="card-title"><i class="ti ti-file-invoice" style="color:var(--orange);margin-right:6px"></i>Ultimi contratti</span></div>
+      <div style="padding:0">
+        ${contratti.slice(0,6).map(c=>`<div style="padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+          <div style="flex:1"><div style="font-size:12.5px;font-weight:600">${c.cliente||'—'}</div>
+          <div style="font-size:11px;color:var(--text2)">${c.prodotto||'—'} · ${c.mese||'—'}</div></div>
+          <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:var(--orange)">€ ${((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)).toLocaleString('it-IT')}</div>
+          <div style="font-size:10px;color:var(--text3)">${c.pezzi||1} pz</div></div>
+        </div>`).join('')}
+        ${contratti.length===0?'<div style="padding:30px;text-align:center;color:var(--text3)">Nessun contratto inserito</div>':''}
+      </div>
     </div>
   </div>`;
 }
 
-// ═══════════════════════════════════════════
-// CLIENTI
-// ═══════════════════════════════════════════
+
 async function rClienti(){
   let data=[];
   try{const r=await queryClienti();data=r.data||[];}catch(e){}
@@ -2052,48 +2259,107 @@ async function openClient(id){
 async function rScheda(){
   const c=activeClient;
   if(!c){document.getElementById('content').innerHTML='<div style="padding:30px;text-align:center;color:var(--text3)">Seleziona un cliente dalla lista</div>';return;}
+
+  // Carica timeline attività
+  let attivita=[];
+  try{
+    const{data}=await sb.from('lead_attivita').select('*').eq('cliente_id',c.id).order('created_at',{ascending:false});
+    attivita=data||[];
+  }catch(e){}
+
+  const sl=c.stato_lead||c.stato||'Nuova';
+  const sc=STATI_LEAD&&STATI_LEAD.includes(sl)?sl:'Nuova';
+  const coloriStato={'Nuova':'#FAEEDA','In lavorazione':'#E6F1FB','Preventivo inviato':'#FDF0E8','Vinta':'#EAF3DE','Non convertita — Cliente ha rifiutato':'#FCEBEB','Persa — Cliente ha scelto concorrente':'#FCEBEB','In pausa — Cliente ha rimandato':'#F1EFE8'};
+  const testoStato={'Nuova':'#854F0B','In lavorazione':'#0C447C','Preventivo inviato':'#993C1D','Vinta':'#3B6D11','Non convertita — Cliente ha rifiutato':'#991B1B','Persa — Cliente ha scelto concorrente':'#991B1B','In pausa — Cliente ha rimandato':'#5F5E5A'};
+  const iconMap={'Chiamata telefonica':'ti-phone','Visita cliente':'ti-building','Email inviata':'ti-mail','Preventivo inviato':'ti-file-invoice','Appuntamento fissato':'ti-calendar','Nota interna':'ti-notes'};
+  const colMap={'Chiamata telefonica':'#E6F1FB','Visita cliente':'#EAF3DE','Email inviata':'#FBEAF0','Preventivo inviato':'#FAEEDA','Appuntamento fissato':'#E6F1FB','Nota interna':'var(--gray)'};
+  const txtMap={'Chiamata telefonica':'#0C447C','Visita cliente':'#3B6D11','Email inviata':'#993556','Preventivo inviato':'#854F0B','Appuntamento fissato':'#0C447C','Nota interna':'#5F5E5A'};
+
+  // Verifica permessi
+  const canEdit=c.venditore_id===CU.id||CU.ruolo==='direzione'||CU.email==='anita@petraroloeco.com';
+  const canAssignLead=canAssign();
+  const isReadOnly=CU.ruolo==='cfo'; // Vincenzo solo lettura
+
+  const giorni=c.data_assegnazione?Math.floor((Date.now()-new Date(c.data_assegnazione).getTime())/(1000*60*60*24)):null;
+  const colGiorni=giorni>=7?'var(--red)':giorni>=3?'var(--orange)':'var(--green)';
+
   document.getElementById('content').innerHTML=`
-  <div class="card">
-    <div class="detail-hero">
-      <div class="det-av">${(c.nome||'').slice(0,2).toUpperCase()}</div>
-      <div style="flex:1">
-        <div class="det-name">${c.nome}</div>
-        <div class="det-sub">${c.tipo||''} · ${c.citta||''} · ${c.email||''}</div>
-        <div class="det-badges">${stBadge(c.stato||'Lead')}${badge('Score: '+(c.score||0)+'/100','bg-n')}${isDir()&&c.venditore_nome?badge('👤 '+c.venditore_nome,'bg-gr'):''}</div>
-      </div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end">
-        <button class="btn btn-sm"><i class="ti ti-phone"></i> Chiama</button>
-        <button class="btn btn-sm"><i class="ti ti-mail"></i> Email</button>
-        ${c.stato==='Lead'?`<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:#9FE1CB" onclick="convertiCliente(${c.id})"><i class="ti ti-user-check"></i> Converti in cliente</button>`:''}
-        <button class="btn btn-sm btn-orange" onclick="aiAnal('${c.nome}')"><i class="ti ti-sparkles"></i> AI</button>
+  <div class="row2">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="detail-hero">
+          <div class="det-av">${(c.nome||'').slice(0,2).toUpperCase()}</div>
+          <div style="flex:1">
+            <div class="det-name">${c.nome}</div>
+            <div class="det-sub">${c.tipo||'—'} · ${c.citta||'—'}</div>
+            <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+              <span style="background:${coloriStato[sc]||'#F4F5F7'};color:${testoStato[sc]||'#4A5568'};padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600">${sc.split(' — ')[0]}</span>
+              ${giorni!==null?`<span style="color:${colGiorni};font-size:11px;font-weight:600">${giorni}gg in gestione</span>`:''}
+            </div>
+          </div>
+        </div>
+        <div style="padding:14px 17px;display:flex;flex-direction:column;gap:8px">
+          ${c.tel?`<div style="display:flex;gap:10px;align-items:center"><i class="ti ti-phone" style="color:var(--text3);width:18px"></i><a href="tel:${c.tel}" style="font-size:13px;color:var(--navy)">${c.tel}</a></div>`:''}
+          ${c.email?`<div style="display:flex;gap:10px;align-items:center"><i class="ti ti-mail" style="color:var(--text3);width:18px"></i><a href="mailto:${c.email}" style="font-size:13px;color:var(--navy)">${c.email}</a></div>`:''}
+          ${c.interesse?`<div style="display:flex;gap:10px;align-items:center"><i class="ti ti-car" style="color:var(--text3);width:18px"></i><span style="font-size:13px">${c.interesse}</span></div>`:''}
+          ${c.fonte?`<div style="display:flex;gap:10px;align-items:center"><i class="ti ti-source-code" style="color:var(--text3);width:18px"></i><span style="font-size:13px">${c.fonte}</span></div>`:''}
+          ${c.venditore_nome?`<div style="display:flex;gap:10px;align-items:center"><i class="ti ti-user" style="color:var(--text3);width:18px"></i><span style="font-size:13px">${c.venditore_nome}</span></div>`:''}
+          ${c.data_assegnazione?`<div style="display:flex;gap:10px;align-items:center"><i class="ti ti-user-check" style="color:var(--orange);width:18px"></i><span style="font-size:12px;color:var(--orange)">Assegnata ${new Date(c.data_assegnazione).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})} da ${c.assegnato_da||'—'}</span></div>`:''}
+          ${c.note?`<div style="background:var(--gray);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--text2);margin-top:4px">${c.note}</div>`:''}
+          ${c.note_chiusura?`<div style="background:#FEF3C7;border-radius:7px;padding:9px 12px;font-size:12px;color:#92400E;margin-top:4px"><strong>Motivazione:</strong> ${c.note_chiusura}</div>`:''}
+          ${c.concorrente?`<div style="background:#FEE2E2;border-radius:7px;padding:9px 12px;font-size:12px;color:#991B1B;margin-top:4px"><strong>Concorrente:</strong> ${c.concorrente}${c.pdf_concorrenza?` <a href="${c.pdf_concorrenza}" target="_blank" class="btn btn-sm" style="padding:2px 7px;font-size:10px;margin-left:8px"><i class="ti ti-file-type-pdf"></i> PDF concorrenza</a>`:''}</div>`:''}
+        </div>
+        <div style="padding:10px 17px;border-top:1px solid var(--border);display:flex;gap:7px;flex-wrap:wrap">
+          ${!isReadOnly&&canEdit?`<button class="btn btn-sm btn-orange" onclick="window._currentTimelineClienteId=${c.id};showTimelineForm();openModal('modal-timeline')"><i class="ti ti-plus"></i> Aggiungi attività</button>`:''}
+          ${!isReadOnly&&canEdit?`<button class="btn btn-sm" onclick="cambiaStatoLead(${c.id},'${sc.replace(/'/g,'')}')"><i class="ti ti-tag"></i> Cambia stato</button>`:''}
+          ${!isReadOnly&&canAssignLead?`<button class="btn btn-sm" onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineVenditoreId=${c.venditore_id};openAssegna()"><i class="ti ti-user-check"></i> Riassegna</button>`:''}
+          ${isReadOnly?`<span style="font-size:11px;color:var(--text3);align-self:center"><i class="ti ti-eye"></i> Vista sola lettura</span>`:''}
+        </div>
       </div>
     </div>
-    <div class="tab-bar"><div class="tab active">Dettagli</div><div class="tab">Trattative</div><div class="tab">Attività</div></div>
-    <div class="det-body">
-      <div class="det-col">
-        <div class="df-label">Telefono</div><div class="df-val">${c.tel||'—'}</div>
-        <div class="df-label">Email</div><div class="df-val" style="color:var(--orange)">${c.email||'—'}</div>
-        <div class="df-label">Città</div><div class="df-val">${c.citta||'—'}</div>
-        <div class="df-label">Fonte</div><div class="df-val">${c.fonte||'—'}</div>
-        ${isDir()?`<div class="df-label">Venditore assegnato</div><div class="df-val" style="font-weight:700;color:var(--navy)">${c.venditore_nome||'—'}</div>`:''}
-        <div class="df-label">Valore lifetime</div><div class="df-val" style="font-size:20px;font-weight:700;color:var(--orange)">${c.valore_lifetime||'€ 0'}</div>
+
+    <div class="card" style="max-height:75vh;display:flex;flex-direction:column">
+      <div class="card-head" style="flex-shrink:0">
+        <span class="card-title"><i class="ti ti-timeline" style="color:var(--orange);margin-right:6px"></i>Timeline attività</span>
+        <span style="font-size:11px;color:var(--text3)">${attivita.length} attività</span>
       </div>
-      <div class="det-col">
-        <div class="df-label">Interesse</div><div class="df-val">${c.interesse||'—'}</div>
-        <div class="df-label">Contratto</div><div class="df-val">${c.contratto||'—'}</div>
-        <div class="df-label">Score lead</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px"><div class="prog6" style="flex:1"><div class="prog6-fill" style="width:${c.score||0}%;background:${(c.score||0)>80?'var(--navy)':'var(--orange)'}"></div></div><span style="font-size:15px;font-weight:700">${c.score||0}/100</span></div>
-        <div class="df-label">Note</div>
-        <div style="font-size:12.5px;background:var(--gray);padding:11px 13px;border-radius:8px;line-height:1.6;border-left:3px solid var(--orange)">${c.note||'Nessuna nota'}</div>
-        <div class="df-label">Inserito da</div><div class="df-val" style="color:var(--text3)">${c.created_by||'—'} · ${c.created_at?new Date(c.created_at).toLocaleDateString('it-IT'):''}</div>
+      <div style="overflow-y:auto;flex:1;padding:12px 16px">
+        ${attivita.length===0?`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="ti ti-timeline" style="font-size:28px;display:block;margin-bottom:8px"></i>Nessuna attività registrata${canEdit&&!isReadOnly?'<br><small>Clicca "Aggiungi attività" per iniziare</small>':''}</div>`:''}
+        ${attivita.map((a,i)=>`
+          <div style="display:flex;gap:10px;margin-bottom:14px;position:relative">
+            ${i<attivita.length-1?`<div style="position:absolute;left:13px;top:28px;bottom:-14px;width:1px;background:var(--border)"></div>`:''}
+            <div style="width:28px;height:28px;border-radius:50%;background:${colMap[a.tipo]||'var(--gray)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1">
+              <i class="ti ${iconMap[a.tipo]||'ti-notes'}" style="font-size:13px;color:${txtMap[a.tipo]||'var(--navy)'}"></i>
+            </div>
+            <div style="flex:1;background:var(--gray);border-radius:8px;padding:9px 12px">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px">
+                <span style="font-size:12px;font-weight:700">${a.tipo}</span>
+                <span style="font-size:10.5px;color:var(--text3)">${new Date(a.created_at).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+                ${isDir()||CU.email==='anita@petraroloeco.com'||CU.ruolo==='cfo'?`<span style="font-size:10px;background:var(--navy);color:#fff;padding:1px 6px;border-radius:99px">${a.venditore_nome||'—'}</span>`:''}
+              </div>
+              ${a.descrizione?`<div style="font-size:12px;color:var(--text);margin-bottom:5px">${a.descrizione}</div>`:''}
+              ${a.risposta_cliente?`<div style="background:#fff;border-radius:6px;padding:6px 10px;border-left:2px solid var(--orange);margin-bottom:5px">
+                <div style="font-size:10px;color:var(--orange);font-weight:600;margin-bottom:2px">RISPOSTA CLIENTE</div>
+                <div style="font-size:11.5px;color:var(--text2)">${a.risposta_cliente}</div>
+              </div>`:''}
+              ${a.tipo_preventivo?`<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                ${badge(a.tipo_preventivo,'bg-go')}
+                ${a.importo_preventivo?`<span style="font-size:12px;font-weight:700;color:var(--orange)">€ ${parseFloat(a.importo_preventivo).toLocaleString('it-IT')}</span>`:''}
+                ${a.pdf_url?`<a href="${a.pdf_url}" target="_blank" class="btn btn-sm" style="padding:2px 7px;font-size:10px"><i class="ti ti-file-type-pdf"></i> Preventivo</a>`:''}
+              </div>`:''}
+            </div>
+          </div>`).join('')}
       </div>
     </div>
   </div>`;
+
+  // Imposta _currentTimelineClienteId per il modal
+  window._currentTimelineClienteId=c.id;
+  window._currentTimelineNome=c.nome;
+  window._currentTimelineVenditoreId=c.venditore_id;
 }
 
-// ═══════════════════════════════════════════
-// VEICOLI
-// ═══════════════════════════════════════════
+
 async function rVeicoli(){
   let data=[];
   try{const r=await sb.from('veicoli').select('*').order('created_at',{ascending:false});data=r.data||[];}catch(e){}
@@ -2248,60 +2514,154 @@ async function rDirOverview(){
 
 
 async function rReport(){
-  let cl=0,tr=0,vei=0,contratti=[];
+  let contratti=[];
   try{
-    const[r1,r2,r3,r4]=await Promise.all([
-      queryClienti().select('id',{count:'exact'}),
-      queryTrattative().select('id',{count:'exact'}),
-      sb.from('flotta_veicoli').select('id',{count:'exact'}),
-      (()=>{let q=sb.from('contratti_chiusi').select('margine,pezzi');if(!isDir())q=q.eq('venditore_id',CU.id);return q;})()
-    ]);
-    cl=r1.count||0; tr=r2.count||0; vei=r3.count||0;
-    contratti=r4.data||[];
+    let q=sb.from('contratti_chiusi').select('*').order('mese',{ascending:false});
+    if(!isDir())q=q.eq('venditore_id',CU.id);
+    const{data}=await q;contratti=data||[];
   }catch(e){}
 
-  const totMargine=contratti.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
-  const totPezzi=contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||0),0);
+  // Raggruppa per mese
+  const byMese={};
+  contratti.forEach(c=>{
+    const m=c.mese||'—';
+    if(!byMese[m])byMese[m]={pezzi:0,margine:0,contratti:0,venditori:{}};
+    byMese[m].pezzi+=(parseInt(c.pezzi)||1);
+    byMese[m].margine+=((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1));
+    byMese[m].contratti++;
+    const v=c.venditore_nome||'—';
+    if(!byMese[m].venditori[v])byMese[m].venditori[v]={pezzi:0,margine:0};
+    byMese[m].venditori[v].pezzi+=(parseInt(c.pezzi)||1);
+    byMese[m].venditori[v].margine+=((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1));
+  });
 
-  let fasi={Contatto:0,Proposta:0,'Test drive':0,'In chiusura':0,Chiuso:0};
-  try{ const{data:td}=await queryTrattative().select('fase'); (td||[]).forEach(t=>{if(fasi[t.fase]!==undefined)fasi[t.fase]++;}); }catch(e){}
-  const maxFase=Math.max(...Object.values(fasi),1);
+  const mesi=Object.keys(byMese).sort().reverse();
+  const maxMargine=Math.max(...mesi.map(m=>byMese[m].margine),1);
 
-  let fonti={};
-  try{ const{data:fd}=await queryClienti().select('fonte'); (fd||[]).forEach(c=>{if(c.fonte)fonti[c.fonte]=(fonti[c.fonte]||0)+1;}); }catch(e){}
-  const totFonti=Object.values(fonti).reduce((s,v)=>s+v,0)||1;
-  const fontiSorted=Object.entries(fonti).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  // Raggruppa per venditore per confronto
+  const byVend={};
+  contratti.forEach(c=>{
+    const v=c.venditore_nome||'—';const m=c.mese||'—';
+    if(!byVend[v])byVend[v]={};
+    if(!byVend[v][m])byVend[v][m]={pezzi:0,margine:0};
+    byVend[v][m].pezzi+=(parseInt(c.pezzi)||1);
+    byVend[v][m].margine+=((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1));
+  });
+
+  const ultimi6=mesi.slice(0,6);
+  const totaleAnno=contratti.filter(c=>c.mese&&c.mese.startsWith(new Date().getFullYear().toString())).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
+  const pezziAnno=contratti.filter(c=>c.mese&&c.mese.startsWith(new Date().getFullYear().toString())).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
 
   document.getElementById('content').innerHTML=`
   <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">${isDir()?'Clienti totali':'Miei clienti'}</div><div class="kpi-v">${cl}</div><div class="kpi-d" style="color:var(--text3)">Database live</div></div>
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">${isDir()?'Trattative':'Mie trattative'}</div><div class="kpi-v">${tr}</div><div class="kpi-d" style="color:var(--text3)">Pipeline attivo</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Margine contratti</div><div class="kpi-v">€ ${totMargine.toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">${totPezzi} pezzi totali</div></div>
-    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Veicoli in flotta</div><div class="kpi-v">${vei}</div><div class="kpi-d" style="color:var(--text3)">Gestiti dal team</div></div>
+    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Pezzi anno ${new Date().getFullYear()}</div><div class="kpi-v">${pezziAnno}</div><div class="kpi-d" style="color:var(--text3)">Totale annuo</div></div>
+    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Margine anno ${new Date().getFullYear()}</div><div class="kpi-v">€ ${totaleAnno.toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">Totale annuo</div></div>
+    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Mesi con contratti</div><div class="kpi-v">${mesi.length}</div><div class="kpi-d" style="color:var(--text3)">Storico totale</div></div>
+    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Media mensile</div><div class="kpi-v">€ ${mesi.length>0?Math.round(totaleAnno/Math.min(mesi.filter(m=>m.startsWith(new Date().getFullYear().toString())).length,new Date().getMonth()+1)).toLocaleString('it-IT'):0}</div><div class="kpi-d" style="color:var(--text3)">Margine medio/mese</div></div>
   </div>
-  <div class="row2">
-    <div class="card">
-      <div class="card-head"><span class="card-title">Fonti acquisizione clienti</span></div>
-      <div style="padding:15px 17px">
-        ${fontiSorted.length===0
-          ?'<div style="padding:20px;text-align:center;color:var(--text3)">Nessun dato — inserisci i primi clienti</div>'
-          :fontiSorted.map(([l,n])=>`<div class="rb-row"><span class="rb-label" style="width:200px">${l}</span><div class="prog" style="flex:1"><div class="prog-fill" style="width:${Math.round(n/totFonti*100)}%;background:var(--orange)"></div></div><span class="rb-val">${n}</span></div>`).join('')}
+
+  <div class="full-card">
+    <div class="card-head">
+      <span class="card-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:6px"></i>Confronto mensile — ultimi 6 mesi</span>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-sm" onclick="esportaConfronto('excel')"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+        <button class="btn btn-sm" onclick="esportaConfronto('pdf')"><i class="ti ti-file-type-pdf"></i> PDF</button>
       </div>
     </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">Pipeline per fase</span></div>
-      <div style="padding:15px 17px">
-        ${Object.values(fasi).every(v=>v===0)
-          ?'<div style="padding:20px;text-align:center;color:var(--text3)">Nessuna trattativa — inizia ad inserire dati</div>'
-          :Object.entries(fasi).map(([l,n])=>`<div class="rb-row"><span class="rb-label">${l}</span><div class="prog" style="flex:1"><div class="prog-fill" style="width:${Math.round(n/maxFase*100)}%;background:${n===Math.max(...Object.values(fasi))?'var(--navy)':'var(--orange)'}"></div></div><span class="rb-val">${n}</span></div>`).join('')}
-      </div>
+    <div style="padding:16px">
+      ${ultimi6.map(m=>{
+        const d=byMese[m];
+        const perc=Math.round(d.margine/maxMargine*100);
+        const data=new Date(m+'-01').toLocaleString('it-IT',{month:'long',year:'numeric'});
+        return`<div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div>
+              <span style="font-size:13px;font-weight:700;text-transform:capitalize">${data}</span>
+              <span style="font-size:11px;color:var(--text3);margin-left:8px">${d.pezzi} pezzi · ${d.contratti} contratti</span>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--orange)">€ ${d.margine.toLocaleString('it-IT')}</span>
+          </div>
+          <div style="height:10px;background:var(--gray2);border-radius:5px;overflow:hidden">
+            <div style="height:100%;width:${perc}%;background:linear-gradient(90deg,#1E2D3D,#E8530A);border-radius:5px;transition:width .5s"></div>
+          </div>
+          ${isDir()&&Object.keys(d.venditori).length>1?`<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+            ${Object.entries(d.venditori).sort((a,b)=>b[1].margine-a[1].margine).map(([nome,s])=>`<span style="font-size:10.5px;background:var(--gray);padding:2px 8px;border-radius:99px"><strong>${nome.split(' ')[0]}</strong>: ${s.pezzi}pz · €${s.margine.toLocaleString('it-IT')}</span>`).join('')}
+          </div>`:''}
+        </div>`;
+      }).join('')}
     </div>
-  </div>`;}
+  </div>
+
+  <div class="full-card" id="confronto-table">
+    <div class="card-head"><span class="card-title"><i class="ti ti-table" style="color:var(--orange);margin-right:6px"></i>Tabella completa per periodo</span></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Mese</th><th>Contratti</th><th>Pezzi</th><th>Margine totale</th>${isDir()?'<th>Top venditore</th>':''}<th>vs mese prec.</th></tr></thead>
+      <tbody>
+      ${mesi.map((m,i)=>{
+        const d=byMese[m];
+        const prev=byMese[mesi[i+1]];
+        const diff=prev?Math.round((d.margine-prev.margine)/prev.margine*100):null;
+        const topVend=Object.entries(d.venditori).sort((a,b)=>b[1].margine-a[1].margine)[0];
+        const data=new Date(m+'-01').toLocaleString('it-IT',{month:'long',year:'numeric'});
+        return`<tr>
+          <td style="font-weight:600;text-transform:capitalize">${data}</td>
+          <td style="text-align:center">${d.contratti}</td>
+          <td style="text-align:center;font-weight:700">${d.pezzi}</td>
+          <td style="font-weight:700;color:var(--orange)">€ ${d.margine.toLocaleString('it-IT')}</td>
+          ${isDir()?`<td style="font-size:11.5px">${topVend?topVend[0]+' (€'+topVend[1].margine.toLocaleString('it-IT')+')':'—'}</td>`:''}
+          <td style="font-weight:600;color:${diff===null?'var(--text3)':diff>=0?'var(--green)':'var(--red)'}">${diff===null?'—':diff>=0?'↑ '+diff+'%':'↓ '+Math.abs(diff)+'%'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+async function esportaConfronto(formato){
+  let contratti=[];
+  try{
+    let q=sb.from('contratti_chiusi').select('*').order('mese',{ascending:false});
+    if(!isDir())q=q.eq('venditore_id',CU.id);
+    const{data}=await q;contratti=data||[];
+  }catch(e){showToast('Errore');return;}
+
+  const byMese={};
+  contratti.forEach(c=>{
+    const m=c.mese||'—';
+    if(!byMese[m])byMese[m]={pezzi:0,margine:0,contratti:0};
+    byMese[m].pezzi+=(parseInt(c.pezzi)||1);
+    byMese[m].margine+=((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1));
+    byMese[m].contratti++;
+  });
+  const mesi=Object.keys(byMese).sort().reverse();
+
+  if(formato==='excel'){
+    const hdrs=['Mese','N. Contratti','Pezzi totali','Margine totale €','vs mese precedente'];
+    const sep=';';const qt='"';const esc=v=>qt+String(v||'').replace(new RegExp(qt,'g'),qt+qt)+qt;
+    const rows=mesi.map((m,i)=>{
+      const d=byMese[m];
+      const prev=byMese[mesi[i+1]];
+      const diff=prev?Math.round((d.margine-prev.margine)/prev.margine*100)+'%':'—';
+      const data=new Date(m+'-01').toLocaleString('it-IT',{month:'long',year:'numeric'});
+      return[data,d.contratti,d.pezzi,d.margine.toFixed(2),diff].map(esc).join(sep);
+    });
+    const BOM='﻿';
+    const csv=BOM+[hdrs.map(esc).join(sep),...rows].join('
+');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=url;a.download='Report_Confronto_Mensile_'+new Date().getFullYear()+'.csv';
+    a.click();URL.revokeObjectURL(url);showToast('Report Excel esportato!');
+  } else {
+    const printWin=window.open('','_blank','width=900,height=700');
+    const table=document.querySelector('#confronto-table table');
+    if(!table){showToast('Nessun dato');return;}
+    printWin.document.write('<!DOCTYPE html><html><head><title>Report Confronto Mensile</title><style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px}h1{font-size:16px}table{width:100%;border-collapse:collapse}th{background:#1E2D3D;color:#fff;padding:6px 8px;text-align:left;font-size:10px}td{padding:5px 8px;border-bottom:1px solid #eee;font-size:10px}tr:nth-child(even) td{background:#f9f9f9}</style></head><body><h1>Report Confronto Mensile — Petrarolo & Co. SRL SB</h1><p style="font-size:11px;color:#666">Generato il '+new Date().toLocaleString('it-IT')+' · '+CU.nome+'</p>'+table.outerHTML+'</body></html>');
+    printWin.document.close();printWin.focus();setTimeout(()=>{printWin.print();},500);
+  }
+}
 
 
-// ═══════════════════════════════════════════
-// REPORT CONTRATTI
-// ═══════════════════════════════════════════
 async function rContratti(){
   let contratti=[];
   try{
