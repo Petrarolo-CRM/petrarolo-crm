@@ -1674,17 +1674,29 @@ async function esportaLeadExcel(){
   }catch(e){showToast('Errore');return;}
   if(!leads.length){showToast('Nessuna lead');return;}
   const hdrs=['Data','Cliente','Città','Venditore','Tipo','Telefono','Email','Provenienza','Stato','Motivazione','Concorrente','Note'];
-  const rows=leads.map(l=>[l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'',l.nome||'',l.citta||'',l.venditore_nome||'',l.tipo||'',l.tel||'',l.email||'',(l.fonte||'').replace('LEAD DA ',''),l.stato_lead||'',l.note_chiusura||'',l.concorrente||'',l.note||'']);
+  const sep=';';const qt='"';const nl='
+';
+  const esc=v=>qt+String(v||'').replace(new RegExp(qt,'g'),qt+qt)+qt;
+  const rows=leads.map(l=>[
+    l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'',
+    l.nome||'',l.citta||'',l.venditore_nome||'',l.tipo||'',l.tel||'',l.email||'',
+    (l.fonte||'').replace('LEAD DA ',''),l.stato_lead||'',l.note_chiusura||'',l.concorrente||'',l.note||''
+  ].map(esc).join(sep));
   const vinte=leads.filter(l=>l.stato_lead==='Vinta').length;
-  rows.push(['','','','','','','','','TOTALE: '+leads.length+' | Vinte: '+vinte+' | Conv: '+Math.round(vinte/Math.max(leads.length,1)*100)+'%','','','']);
+  const totRow=[esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),
+    esc('TOTALE: '+leads.length+' | Vinte: '+vinte+' | Conv: '+Math.round(vinte/Math.max(leads.length,1)*100)+'%'),
+    esc(''),esc(''),esc('')].join(sep);
   const BOM='﻿';
-  const csv=[hdrs,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('
-');
-  const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='Report_Lead_'+(isDir()?'Team':CU.nome.replace(/ /g,'_'))+'_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();URL.revokeObjectURL(url);showToast('Report Lead Excel esportato!');
+  const csv=BOM+[hdrs.map(esc).join(sep),...rows,totRow].join(nl);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='Report_Lead_'+(isDir()?'Team':CU.nome.replace(/ /g,'_'))+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(url);
+  showToast('Report Lead Excel esportato!');
 }
+
 
 function esportaLeadPdf(){
   const dal=document.getElementById('rl-dal')?.value||'';
