@@ -213,7 +213,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
 .uav{width:32px;height:32px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
 .uname{font-size:12px;font-weight:600;color:#fff}
 .urole{font-size:10px;color:rgba(255,255,255,.4)}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;height:100vh}
 .acc-bar{height:3px;background:linear-gradient(90deg,var(--orange),var(--orange2),var(--navy));flex-shrink:0}
 .topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .tbl-left{display:flex;align-items:center;gap:12px}
@@ -365,7 +365,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
   .topbar{padding:0 10px;height:48px}
   #mobile-menu-btn{display:flex!important;align-items:center;justify-content:center;width:36px;height:36px;border:none;background:none;cursor:pointer;color:var(--text);font-size:22px;flex-shrink:0}
   #bottom-nav{display:flex!important}
-  #content{padding:10px 8px 80px 8px}
+  #content{padding:10px 8px 80px 8px;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .kpi-g{grid-template-columns:1fr 1fr;gap:8px}
   .row2{grid-template-columns:1fr}
   .form-grid{grid-template-columns:1fr}
@@ -380,6 +380,9 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
   .kpi-v{font-size:1.6rem}
   .box{width:92vw!important;max-width:420px;padding:24px 20px}
   #fab-btn{display:flex!important}
+  .full-card{overflow:visible!important}
+  .cnt{height:auto!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+  #rl-leads-container{overflow:visible}
   .lead-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.05)}
   .lead-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
   .lead-card-name{font-size:14px;font-weight:700;color:var(--navy)}
@@ -1537,7 +1540,7 @@ async function rReportLead(){
         <button class="btn btn-sm" onclick="esportaLeadPdf()"><i class="ti ti-file-type-pdf"></i> PDF</button>
       </div>
     </div>
-    <div id="rl-leads-container" style="padding:8px">
+    <div id="rl-leads-container" style="padding:8px 4px">
       ${leads.map(l=>{const sl=l.stato_lead||'Nuova';const sc=STATO_COLORS[sl]||'#F4F5F7';const st2=STATO_TEXT[sl]||'#4A5568';const slabel=sl.split(' — ')[0];const lid=l.id;const lnome=(l.nome||'').replace(/'/g,'');return`<div class="lead-card"><div class="lead-card-header"><div class="lead-card-name">${l.nome||'—'}</div><span class="lead-card-stato" style="background:${sc};color:${st2}">${slabel}</span></div><div class="lead-card-info"><i class="ti ti-map-pin" style="color:var(--text3);margin-right:4px"></i>${l.citta||'—'}</div><div class="lead-card-info"><i class="ti ti-user" style="color:var(--text3);margin-right:4px"></i>${l.venditore_nome||'—'}</div><div class="lead-card-info"><i class="ti ti-source-code" style="color:var(--text3);margin-right:4px"></i>${(l.fonte||'—').replace('LEAD DA ','')}</div><div class="lead-card-info"><i class="ti ti-calendar" style="color:var(--text3);margin-right:4px"></i>${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</div><div class="lead-card-actions"><button class="btn btn-sm" onclick="cambiaStatoLead(${lid},this.dataset.s)" data-s="${sl}" style="flex:1;justify-content:center"><i class="ti ti-tag"></i> Stato</button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${lid};window._currentTimelineNome='${lnome}';openTimeline(${lid})" style="flex:1;justify-content:center"><i class="ti ti-timeline"></i> Timeline</button></div></div>`;}).join('')||'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna lead trovata</div>'}
     </div>
   </div>`;
