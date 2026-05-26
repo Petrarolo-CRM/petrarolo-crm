@@ -373,6 +373,15 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
 
   /* ── CONTENT ── */
   #content{padding:10px 8px 80px 8px;min-height:calc(100vh - 48px);overflow-y:auto}
+  #rl-desktop-table{display:none}
+  #rl-mobile-cards{display:block!important}
+  .lead-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.05)}
+  .lead-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+  .lead-card-name{font-size:14px;font-weight:700;color:var(--navy)}
+  .lead-card-stato{font-size:11px;padding:3px 10px;border-radius:99px;font-weight:600}
+  .lead-card-info{font-size:12px;color:var(--text2);margin-bottom:4px}
+  .lead-card-actions{display:flex;gap:8px;margin-top:10px}
+  .lead-card-actions .btn{flex:1;justify-content:center;padding:8px}
 
   /* ── GRID ── */
   .kpi-g{grid-template-columns:1fr 1fr;gap:8px}
@@ -1188,6 +1197,8 @@ async function rAttivita(){
       <td>${badge(a.stato||'—',a.stato==='Completata'?'bg-g':a.stato==='In corso'?'bg-n':'bg-o')}</td>
     </tr>`).join(''):`<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3)">Nessuna attività</td></tr>`}
     </tbody></table></div>
+  <!-- Mobile cards -->
+  <div id="rl-mobile-cards" style="display:none;padding:8px"></div>
   </div>`;}
 
 async function rUtenti(){
@@ -1756,7 +1767,8 @@ async function rReportLead(){
         <button class="btn btn-sm" onclick="esportaLeadPdf()"><i class="ti ti-file-type-pdf"></i> PDF</button>
       </div>
     </div>
-    <div class="tbl-wrap"><table class="tbl" id="rl-table"><thead><tr><th>Cliente</th><th>Città</th><th>Venditore</th><th>Provenienza</th><th>Stato</th><th>Data apertura</th><th>Azioni</th></tr></thead>
+    <!-- Desktop table -->
+  <div class="tbl-wrap" id="rl-desktop-table"><table class="tbl" id="rl-table"><thead><tr><th>Cliente</th><th>Città</th><th>Venditore</th><th>Provenienza</th><th>Stato</th><th>Data apertura</th><th>Azioni</th></tr></thead>
     <tbody id="rl-tbody">
     ${leads.map(l=>{
       const sl=l.stato_lead||'Nuova';
@@ -1771,6 +1783,8 @@ async function rReportLead(){
             </td><td><div style="display:flex;gap:4px"><button class="btn btn-sm" onclick="cambiaStatoLead(${lid},this.dataset.s)" data-s="${sl}" title="Cambia stato"><i class="ti ti-tag"></i></button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${lid};window._currentTimelineNome='${lnome}';openTimeline(${lid})" title="Timeline"><i class="ti ti-timeline"></i></button></div></td></tr>`;
     }).join('')}
     </tbody></table></div>
+  <!-- Mobile cards -->
+  <div id="rl-mobile-cards" style="display:none;padding:8px"></div>
   </div>`;
   setTimeout(async()=>{
     const sel=document.getElementById('rl-venditore');if(!sel)return;
@@ -2104,6 +2118,40 @@ async function eliminaCliente(id, nome){
   }catch(e){showToast('Errore: '+e.message);}
 }
 
+function renderLeadCards(leads){
+  const container=document.getElementById('rl-mobile-cards');
+  if(!container)return;
+  const STATO_COLORS={'Nuova':'#FAEEDA','In lavorazione':'#E6F1FB','Preventivo inviato':'#FDF0E8','Vinta':'#EAF3DE','Non convertita — Cliente ha rifiutato':'#FCEBEB','Persa — Cliente ha scelto concorrente':'#FCEBEB','In pausa — Cliente ha rimandato':'#F1EFE8'};
+  const STATO_TEXT={'Nuova':'#854F0B','In lavorazione':'#0C447C','Preventivo inviato':'#993C1D','Vinta':'#3B6D11','Non convertita — Cliente ha rifiutato':'#991B1B','Persa — Cliente ha scelto concorrente':'#991B1B','In pausa — Cliente ha rimandato':'#5F5E5A'};
+  if(!leads||!leads.length){
+    container.innerHTML='<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna lead trovata</div>';
+    return;
+  }
+  container.innerHTML=leads.map(l=>{
+    const sl=l.stato_lead||'Nuova';
+    const sc=STATO_COLORS[sl]||'#F4F5F7';
+    const st=STATO_TEXT[sl]||'#4A5568';
+    const slabel=sl.split(' — ')[0];
+    const lid=l.id;
+    const lnome=(l.nome||'').replace(/'/g,'');
+    return`<div class="lead-card">
+      <div class="lead-card-header">
+        <div class="lead-card-name">${l.nome||'—'}</div>
+        <span class="lead-card-stato" style="background:${sc};color:${st}">${slabel}</span>
+      </div>
+      <div class="lead-card-info"><i class="ti ti-map-pin" style="color:var(--text3);margin-right:4px"></i>${l.citta||'—'}</div>
+      <div class="lead-card-info"><i class="ti ti-user" style="color:var(--text3);margin-right:4px"></i>${l.venditore_nome||'—'}</div>
+      <div class="lead-card-info"><i class="ti ti-source-code" style="color:var(--text3);margin-right:4px"></i>${(l.fonte||'—').replace('LEAD DA ','')}</div>
+      <div class="lead-card-info"><i class="ti ti-calendar" style="color:var(--text3);margin-right:4px"></i>${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</div>
+      ${l.data_assegnazione?`<div class="lead-card-info" style="color:var(--orange)"><i class="ti ti-user-check" style="margin-right:4px"></i>Assegnata: ${new Date(l.data_assegnazione).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>`:''}
+      <div class="lead-card-actions">
+        <button class="btn btn-sm" onclick="cambiaStatoLead(${lid},this.dataset.s)" data-s="${sl}" style="flex:1;justify-content:center"><i class="ti ti-tag"></i> Stato</button>
+        <button class="btn btn-sm" onclick="window._currentTimelineClienteId=${lid};window._currentTimelineNome='${lnome}';openTimeline(${lid})" style="flex:1;justify-content:center"><i class="ti ti-timeline"></i> Timeline</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function toggleMobileMenu(){var sb=document.querySelector('.sb'),ov=document.getElementById('mobile-overlay');if(sb)sb.classList.toggle('mobile-open');if(ov)ov.classList.toggle('active');}
 function closeMobileMenu(){var sb=document.querySelector('.sb'),ov=document.getElementById('mobile-overlay');if(sb)sb.classList.remove('mobile-open');if(ov)ov.classList.remove('active');}
 
@@ -2328,6 +2376,8 @@ async function rClienti(){
       </div></td>
     </tr>`).join('')}
     </tbody></table></div>
+  <!-- Mobile cards -->
+  <div id="rl-mobile-cards" style="display:none;padding:8px"></div>
   </div>`;
 }
 
@@ -2462,6 +2512,8 @@ async function rVeicoli(){
       <td>${badge(v.stato||'—',v.stato==='Disponibile'?'bg-g':v.stato==='Urgente'?'bg-r':'bg-o')}</td>
     </tr>`).join('')}
     </tbody></table></div>
+  <!-- Mobile cards -->
+  <div id="rl-mobile-cards" style="display:none;padding:8px"></div>
   </div>`;
 }
 
@@ -2487,6 +2539,8 @@ async function rTrattative(){
       <td style="color:var(--text2)">${t.scadenza||'—'}</td>
     </tr>`).join('')}
     </tbody></table></div>
+  <!-- Mobile cards -->
+  <div id="rl-mobile-cards" style="display:none;padding:8px"></div>
   </div>`;
 }
 
@@ -3010,6 +3064,8 @@ async function rFlotta(){
       </tr>`;
     }).join('')}
     </tbody></table></div>
+  <!-- Mobile cards -->
+  <div id="rl-mobile-cards" style="display:none;padding:8px"></div>
   </div>`;
 }
 
