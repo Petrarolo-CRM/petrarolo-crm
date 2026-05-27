@@ -2441,22 +2441,18 @@ async function rFlotta(){
 }
 
 function toggleCampiNoleggio(val){
-  // Prodotti senza noleggio: Acquisto diretto
   const isAcquisto = val === 'Acquisto diretto';
   const ids = ['c-durata','c-data-inizio','c-data-fine'];
   const reqIds = ['c-durata-req','c-data-inizio-req','c-data-fine-req'];
-  const labels = ['Durata noleggio','Data inizio','Data fine'];
-  
   ids.forEach((id, i) => {
     const el = document.getElementById(id);
     const req = document.getElementById(reqIds[i]);
     const fg = el ? el.closest('.form-group') : null;
-    if (fg) {
-      fg.style.opacity = isAcquisto ? '0.4' : '1';
-      fg.style.pointerEvents = isAcquisto ? 'none' : '';
+    if(fg){
+      fg.style.display = isAcquisto ? 'none' : '';
     }
-    if (req) req.style.display = isAcquisto ? 'none' : '';
-    if (el && isAcquisto) { el.value = ''; el.style.borderColor = ''; el.style.boxShadow = ''; }
+    if(el && isAcquisto){ el.value=''; el.style.borderColor=''; el.style.boxShadow=''; }
+    if(req) req.style.display = isAcquisto ? 'none' : '';
   });
 }
 
