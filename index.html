@@ -801,9 +801,10 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
         <div class="form-label">Specifica partner <span class="form-req">*</span></div>
         <input id="c-partner-altro" type="text" placeholder="Nome del partner...">
       </div>
-      <div class="form-group"><div class="form-label">Società di noleggio <span class="form-req">*</span></div>
+      <div class="form-group"><div class="form-label">Società di noleggio <span class="form-req" id="c-societa-req">*</span></div>
         <select id="c-societa-noleggio">
           <option value="">— Seleziona società —</option>
+          <option value="INTERMEDIAZIONE VENDITA">INTERMEDIAZIONE VENDITA</option>
           <option value="VRENT SPA">VRENT SPA</option>
           <option value="FORD TRUCKS ITALIA">FORD TRUCKS ITALIA</option>
           <option value="TIP">TIP</option>
@@ -2212,7 +2213,10 @@ function toggleCampiBO(val){
   if(!isNLT){const n=document.getElementById('c-nbo');const d=document.getElementById('c-data-bo');if(n){n.value='';n.style.borderColor='';n.style.boxShadow='';}if(d){d.value='';d.style.borderColor='';d.style.boxShadow='';}}
 }
 function toggleCampiNoleggio(val){
-  const isAcquisto=val==='Acquisto diretto';
+  const isAcquisto = val==='Acquisto diretto';
+  const isLeasing  = val==='Leasing';
+
+  // Campi durata/date: nascosti solo per Acquisto diretto
   ['c-durata','c-data-inizio','c-data-fine'].forEach((id,i)=>{
     const el=document.getElementById(id);const fg=el?el.closest('.form-group'):null;
     if(fg)fg.style.display=isAcquisto?'none':'';
@@ -2220,6 +2224,13 @@ function toggleCampiNoleggio(val){
     const req=document.getElementById(['c-durata-req','c-data-inizio-req','c-data-fine-req'][i]);
     if(req)req.style.display=isAcquisto?'none':'';
   });
+
+  // Società noleggio: sempre obbligatoria
+  // Per Acquisto diretto e Leasing suggerisci Intermediazione vendita
+  const selSoc=document.getElementById('c-societa-noleggio');
+  if(selSoc&&(isAcquisto||isLeasing)&&!selSoc.value){
+    selSoc.value='INTERMEDIAZIONE VENDITA';
+  }
 }
 function calcolaMargini(){
   const margine=parseFloat(document.getElementById('c-margine')?.value)||0;
