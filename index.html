@@ -493,7 +493,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div class="form-group"><div class="form-label">Nome completo <span class="form-req">*</span></div><input id="u-nome" type="text" placeholder="Mario Rossi"></div>
       <div class="form-group"><div class="form-label">Ruolo <span class="form-req">*</span></div>
         <select id="u-ruolo">
-          <option value="venditore">Venditore</option>
+          <option value="venditore">Consulente</option>
           <option value="direzione">Direzione</option>
           <option value="admin">Admin</option>
         </select>
@@ -713,11 +713,12 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
     </div>
     <div class="form-grid">
       <div class="form-group"><div class="form-label">Mese di riferimento <span class="form-req">*</span></div><input id="c-mese" type="month" value="2026-05"></div>
+      <div class="form-group"><div class="form-label">Consulente</div><input id="c-consulente-display" type="text" style="background:var(--gray);color:var(--text2)" readonly placeholder="Caricato dal login..."></div>
       <div class="form-group"><div class="form-label">Data contratto firmato <span class="form-req">*</span></div><input id="c-data-firma" type="date"></div>
       <div class="form-group"><div class="form-label">N° BO <span class="form-req">*</span></div><input id="c-nbo" type="text" placeholder="es. BO-2026-001"></div>
       <div class="form-group"><div class="form-label">Data BO <span class="form-req">*</span></div><input id="c-data-bo" type="date"></div>
       <div class="form-group"><div class="form-label">Cliente <span class="form-req">*</span></div><input id="c-cliente" type="text" placeholder="es. 3 Zeta Trasporti SRL"></div>
-      <div class="form-group"><div class="form-label">Città <span class="form-req">*</span></div><input id="c-citta" type="text" placeholder="es. Bari, Corato, Andria..."></div>
+      <div class="form-group"><div class="form-label">Città</div><input id="c-citta" type="text" placeholder="es. Bari, Corato, Andria..."></div>
       <div class="form-group"><div class="form-label">Provenienza <span class="form-req">*</span></div>
         <select id="c-provenienza" onchange="toggleSegnalatoreCont(this.value)">
           <option value="">— Seleziona provenienza —</option>
@@ -744,7 +745,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;padding:6px 0">🚗 Veicolo & Contratto</div>
     </div>
     <div class="form-grid">
-      <div class="form-group form-full"><div class="form-label">Veicolo / Descrizione contratto <span class="form-req">*</span></div><input id="c-veicolo" type="text" placeholder="es. Ford Transit 350, BMW X5, Sprinter 319..."></div>
+      <div class="form-group form-full"><div class="form-label">Marca e modello veicolo <span class="form-req">*</span></div><input id="c-veicolo" type="text" placeholder="es. Ford Transit 350, BMW X5, Sprinter 319..."></div>
       <div class="form-group"><div class="form-label">Tipo veicolo <span class="form-req">*</span></div>
         <select id="c-tipo-veicolo" onchange="toggleTipoVeicoloCustom(this.value)">
           <option value="">— Seleziona tipo —</option>
@@ -771,9 +772,6 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div class="form-group"><div class="form-label">Partner di fatturazione <span class="form-req">*</span></div>
         <select id="c-partner" onchange="togglePartnerAltro(this.value)">
           <option value="">— Seleziona partner —</option>
-          <option value="VRENT SPA">VRENT SPA</option>
-          <option value="FORD TRUCKS ITALIA">FORD TRUCKS ITALIA</option>
-          <option value="TIP">TIP</option>
           <optgroup label="HORIZON AUTOMOTIVE">
             <option value="HORIZON AUTOMOTIVE — ARVAL">↳ ARVAL</option>
             <option value="HORIZON AUTOMOTIVE — AYVENS">↳ AYVENS</option>
@@ -783,6 +781,9 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
             <option value="HORIZON AUTOMOTIVE — ALPHABET">↳ ALPHABET</option>
             <option value="HORIZON AUTOMOTIVE — RENT2GO">↳ RENT2GO</option>
           </optgroup>
+          <option value="VRENT SPA">VRENT SPA</option>
+          <option value="FORD TRUCKS ITALIA">FORD TRUCKS ITALIA</option>
+          <option value="TIP">TIP</option>
           <option value="DRIVALIA DIRETTO BY PETRAROLO">DRIVALIA DIRETTO BY PETRAROLO</option>
           <option value="SANTANDER RENTING DIRETTO BY PETRAROLO">SANTANDER RENTING DIRETTO BY PETRAROLO</option>
           <option value="ITALRENT DIRETTO BY PETRAROLO">ITALRENT DIRETTO BY PETRAROLO</option>
@@ -827,12 +828,12 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
           <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);padding:0 12px">
             <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Provvigioni consulente</div>
             <div id="c-calc-provv" style="font-size:18px;font-weight:800;color:var(--red)">- € 0,00</div>
-            <div style="font-size:10px;color:var(--text3)">50% del Margine Lordo</div>
+            <div style="font-size:10px;color:var(--text3)">50% del Margine Totale Lordo</div>
           </div>
           <div style="text-align:center">
             <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Margine Netto</div>
             <div id="c-calc-netto" style="font-size:18px;font-weight:800;color:var(--green)">€ 0,00</div>
-            <div style="font-size:10px;color:var(--text3)">Lordo - Segnalaz. - Altri costi - Provv.</div>
+            <div style="font-size:10px;color:var(--text3)">20% del Margine Totale Lordo</div>
           </div>
         </div>
       </div>
@@ -1081,7 +1082,7 @@ async function rUtenti(){
   let data=[];
   try{const r=await sb.from('crm_utenti').select('id,nome,email,ruolo,ruolo_label,attivo,created_at').order('created_at',{ascending:true});data=r.data||[];}catch(e){}
   const roleColors={direzione:'bg-go',cfo:'bg-go',venditore:'bg-n',admin:'bg-r'};
-  const roleLbl={direzione:'Direzione',cfo:'CFO',venditore:'Venditore',admin:'Admin'};
+  const roleLbl={direzione:'Direzione',cfo:'CFO',venditore:'Consulente',admin:'Admin'};
   document.getElementById('content').innerHTML=`
   <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
     <button class="btn btn-orange" onclick="openModal('modal-utente')"><i class="ti ti-user-plus"></i> Nuovo utente</button>
@@ -1101,7 +1102,7 @@ async function rUtenti(){
   </div>`;}
 
 function rImpostazioni(){
-  const roleLabel={direzione:'Direzione',cfo:'CFO — Amministrazione',venditore:CU?.ruolo_label||'Venditore',admin:'Amministratore'}[CU?.ruolo]||CU?.ruolo_label||CU?.ruolo;
+  const roleLabel={direzione:'Direzione',cfo:'CFO — Amministrazione',venditore:CU?.ruolo_label||'Consulente',admin:'Amministratore'}[CU?.ruolo]||CU?.ruolo_label||CU?.ruolo;
   const roleBadge=CU?.ruolo==='direzione'||CU?.ruolo==='cfo'?'bg-go':CU?.ruolo==='admin'?'bg-r':'bg-n';
   document.getElementById('content').innerHTML=`
   <div class="row2">
@@ -1262,6 +1263,9 @@ function openModal(id){
     }
   }
   if(id==='modal-contratto'){
+    // Popola automaticamente il consulente dal login
+    const consEl=document.getElementById('c-consulente-display');
+    if(consEl&&CU)consEl.value=CU.nome+' — '+(CU.ruolo_label||'Consulente');
     // Reset evidenziazione rosso su tutti i campi quando si riapre il modal
     ['c-mese','c-data-firma','c-nbo','c-data-bo','c-cliente','c-citta',
      'c-provenienza','c-prodotto-tipo','c-partner','c-societa-noleggio',
@@ -1769,7 +1773,7 @@ function doLogout() {
 function startApp() {
   document.getElementById('user-av').textContent = CU.nome.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('user-name').textContent = CU.nome;
-  const roleLabel = {direzione:'Direzione',cfo:'CFO — Amministrazione',venditore:CU.ruolo_label||'Venditore',admin:'Amministratore'}[CU.ruolo]||CU.ruolo_label||CU.ruolo;
+  const roleLabel = {direzione:'Direzione',cfo:'CFO — Amministrazione',venditore:CU.ruolo_label||'Consulente',admin:'Amministratore'}[CU.ruolo]||CU.ruolo_label||CU.ruolo;
   document.getElementById('user-role').textContent = roleLabel;
   // mostra voci menu riservate a dir/admin
   if (CU.ruolo==='direzione'||CU.ruolo==='admin'||CU.ruolo==='cfo') {
@@ -2041,7 +2045,7 @@ async function rDirOverview(){
   
   const stats=venditori.map(u=>({
     nome:u.nome,
-    ruolo_label:u.ruolo_label||'Venditore',
+    ruolo_label:u.ruolo_label||'Consulente',
     init:u.nome.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2),
     clienti:clienti.filter(c=>c.venditore_id===u.id).length,
     lead:clienti.filter(c=>c.venditore_id===u.id&&c.stato==='Lead').length,
@@ -2074,7 +2078,7 @@ async function rDirOverview(){
     </div>
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr>
-        <th>Venditore</th><th>Ruolo</th><th>Clienti</th><th>Lead</th><th>Trattative</th><th>In chiusura</th><th>Pezzi mese</th><th>Margine mese</th><th>Pezzi totali</th><th>Margine totale</th>
+        <th>Consulente</th><th>Ruolo</th><th>Clienti</th><th>Lead</th><th>Trattative</th><th>In chiusura</th><th>Pezzi mese</th><th>Margine mese</th><th>Pezzi totali</th><th>Margine totale</th>
       </tr></thead>
       <tbody>
       ${stats.sort((a,b)=>b.margine_mese-a.margine_mese).map(u=>`<tr>
@@ -2470,7 +2474,7 @@ function calcolaMargini(){
   
   const lordo=(margine*pezzi)+(bonus*pezzi);
   const provvigioni=-(lordo*0.5);
-  const netto=lordo+segnalazione+altriCosti+provvigioni;
+  const netto=lordo*0.20;  // 20% del Margine Totale Lordo
   
   const fmt=v=>v.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
   
@@ -2626,13 +2630,13 @@ async function esportaExcel(){
   if(!contratti.length){showToast('Nessun contratto da esportare');return;}
 
   // Crea CSV
-  const headers=['Mese','Data Firma','N° BO','Data BO','Consulente','Partner Fatturazione','Società Noleggio','Cliente','Città','Provenienza','Prodotto','Durata (mesi)','Data Inizio','Data Fine','Veicolo','Tipo Veicolo','Pezzi','Margine Unitario (€)','Bonus (€)','Margine Totale Lordo (€)','Nominativo Segnalatore','Costo Segnalazione (€)','Altri Costi (€)','Provvigioni Consulente (€)','Margine Netto (€)','Collega in Tandem','Note'];
+  const headers=['Mese','Data contratto firmato','N° BO','Data BO','Consulente','Partner di fatturazione','Società di noleggio','Nominativo Cliente','Città','Provenienza','Prodotto','Durata noleggio in mesi','Data inizio noleggio','Data fine noleggio','Marca e modello Veicolo','Tipo Veicolo','Pezzi','Margine Unitario (€)','Bonus (€)','Margine Totale Lordo (€)','Nominativo Segnalatore','Costo Segnalazione (€)','Altri costi','Provvigioni consulente','Margine netto','Collega in tandem','Note'];
   const rows=contratti.map(c=>[
     c.mese||'',
     c.data_firma||'',
     c.nbo||'',
     c.data_bo||'',
-    c.venditore_nome||'',
+    c.venditore_nome||'',  // Consulente
     c.partner||'',
     c.societa_noleggio||'',
     c.cliente||'',
@@ -2659,7 +2663,7 @@ async function esportaExcel(){
 
   // Aggiungi riga totali
   const totMargine=contratti.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
-  const totMargTot=contratti.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
+  const totMargTot=contratti.reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))),0);
   const totPezzi=contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
   const totBonus=contratti.reduce((s,c)=>s+(parseFloat(c.bonus)||0),0);
   const totSegn=contratti.reduce((s,c)=>s+(parseFloat(c.margine_segnalazione)||0),0);
@@ -2757,7 +2761,7 @@ async function salvaContratto(){
   if(!nbo)missing.push('N° BO');
   if(!dataBo)missing.push('Data BO');
   if(!cliente)missing.push('Cliente');
-  if(!citta)missing.push('Città');
+  // Città opzionale
   if(!provenienza)missing.push('Provenienza');
   if(!prodotto_tipo)missing.push('Tipo prodotto');
   if(!partner)missing.push('Partner di fatturazione');
@@ -2864,7 +2868,7 @@ async function salvaContratto(){
   const altriCostiNum=parseFloat(document.getElementById('c-altri-costi')?.value)||0;
   const lordo=(margineNum*pezziNum)+(bonusNum*pezziNum);
   const provvigioniNum=-(lordo*0.5);
-  const netto=lordo+segnalazioneNum+altriCostiNum+provvigioniNum;
+  const netto=lordo*0.20;  // Margine netto = 20% del Margine Totale Lordo
   
   // Tipo veicolo
   let tipoVeicoloFinal=tipoVeicolo;
