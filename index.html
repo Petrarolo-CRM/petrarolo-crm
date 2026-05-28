@@ -887,7 +887,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div class="ni" data-sec="flotta"><i class="ti ti-car"></i> Flotta & Scadenze</div>
       <div class="ni" data-sec="lead"><i class="ti ti-user-plus"></i> Nuovo lead</div>
       <div class="ni" data-sec="veicoli"><i class="ti ti-car"></i> Veicoli</div>
-      <div class="ni" data-sec="trattative"><i class="ti ti-chart-bar"></i> Trattative</div>
+      <div class="ni" data-sec="trattative" style="display:none"><i class="ti ti-chart-bar"></i> Trattative</div>
       <div class="sb-sec">Analisi</div>
       <div class="ni" data-sec="report"><i class="ti ti-report-analytics"></i> Report &amp; KPI</div>
       <div class="ni" data-sec="contratti"><i class="ti ti-file-invoice"></i> Report Contratti</div>
@@ -896,7 +896,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div class="sb-sec">AI &amp; Strumenti</div>
       <div class="ni" data-sec="ai"><i class="ti ti-sparkles"></i> AI Assistant <span class="bnew">AI</span></div>
       <div class="ni" data-sec="agenda"><i class="ti ti-calendar"></i> Agenda</div>
-      <div class="ni" data-sec="attivita"><i class="ti ti-checklist"></i> Attività</div>
+      <div class="ni" data-sec="attivita" style="display:none"><i class="ti ti-checklist"></i> Attività</div>
       <div class="sb-sec">Sistema</div>
       <div class="ni dir-only" data-sec="utenti"><i class="ti ti-shield-lock"></i> Gestione utenti <span class="bnew">ADM</span></div>
       <div class="ni" data-sec="impostazioni"><i class="ti ti-settings"></i> Impostazioni</div>
@@ -1069,7 +1069,7 @@ function rAgenda(){
 
 async function rAttivita(){
   let data=[];
-  try{let q=sb.from('attivita').select('*').order('created_at',{ascending:false});if(!isDir())q=q.eq('assegnato_id',CU.id);const r=await q;data=r.data||[];}catch(e){}
+  try{let q=sb.from('attivita').select('*').order('created_at',{ascending:false});if(!isDir())q=q.eq('assegnato_id',CU.id);const r=await q;data=r.data||[];}catch(e){console.log('Attivita:',e.message);}
   document.getElementById('content').innerHTML=`
   <div class="full-card">
     <div class="card-head"><span class="card-title"><i class="ti ti-checklist" style="color:var(--orange);margin-right:6px"></i>${isDir()?'Attività team':'Le mie attività'} — ${data.length}</span></div>
@@ -1800,7 +1800,7 @@ function setupNav() {
       document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
       el.classList.add('active');
       currentSec=sec;
-      const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
+      const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti','report-lead':'Report Lead',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
       document.getElementById('page-title').textContent=titles[sec]||sec;
       renderSec(sec);
     });
@@ -1815,7 +1815,9 @@ function navTo(sec) {
   if(el)el.classList.add('active');
   const bnav=document.getElementById('bnav-'+sec);
   if(bnav)bnav.classList.add('active');
-  const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
+  // Push state for browser back button
+  history.pushState({sec}, '', '?sec='+sec);
+  const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti','report-lead':'Report Lead',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
   document.getElementById('page-title').textContent=titles[sec]||sec;
   currentSec=sec;
   renderSec(sec);
@@ -1922,7 +1924,12 @@ async function rClienti(){
       <td style="color:var(--text2)">${c.interesse||'—'}</td>
       <td><div style="display:flex;align-items:center;gap:6px">${prog(c.score||0,'var(--orange)')}<span style="font-size:11px;font-weight:700;color:${(c.score||0)>80?'var(--navy)':'var(--orange)'}">${c.score||0}</span></div></td>
       ${isDir()?`<td><span style="font-size:11.5px;font-weight:600;color:var(--navy)">${c.venditore_nome||'—'}</span></td>`:''}
-      <td>${stBadge(c.stato||'Lead')}</td>
+      <td>${stBadge(c.stato_lead||c.stato||'Nuova')}</td>
+      <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">
+        <button class="btn btn-sm" onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineNome='${(c.nome||'').replace(/'/g,'')}';openTimeline(${c.id})" title="Timeline"><i class="ti ti-timeline"></i></button>
+        ${canAssign()?`<button class="btn btn-sm" onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineVenditoreId=${c.venditore_id};openAssegna()" title="Riassegna"><i class="ti ti-user-check"></i></button>`:''}
+        ${canAssign()?`<button class="btn btn-sm btn-red" onclick="event.stopPropagation();eliminaCliente(${c.id},'${(c.nome||'').replace(/'/g,'')}')"><i class="ti ti-trash"></i></button>`:''}
+      </div></td>
     </tr>`).join('')}
     </tbody></table></div>
   </div>`;
@@ -2007,7 +2014,7 @@ async function rVeicoli(){
 // ═══════════════════════════════════════════
 async function rTrattative(){
   let data=[];
-  try{const r=await queryTrattative();data=r.data||[];}catch(e){}
+  try{const r=await queryTrattative();data=r.data||[];}catch(e){console.log('Trattative:',e.message);}
   document.getElementById('content').innerHTML=`
   <div class="full-card">
     <div class="card-head"><span class="card-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:6px"></i>${isDir()?'Tutte le trattative':'Le mie trattative'} — ${data.length}</span>
@@ -3015,6 +3022,13 @@ async function salvaContratto(){
   btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';
 }
 
+
+// Browser back button support
+window.addEventListener('popstate', function(e){
+  if(e.state&&e.state.sec){
+    navTo(e.state.sec);
+  }
+});
 
 // ═══ AUTO-INIT SUPABASE ═══
 (function(){
