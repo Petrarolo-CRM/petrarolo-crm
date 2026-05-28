@@ -870,6 +870,114 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
   </div>
 </div>
 
+<!-- MODAL NUOVA/MODIFICA TRATTATIVA -->
+<div class="modal-overlay" id="modal-trattativa">
+  <div class="modal" style="width:620px">
+    <div class="modal-head">
+      <span class="modal-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:7px"></i>Trattativa</span>
+      <button class="modal-close" onclick="closeModal('modal-trattativa');document.getElementById('save-trattativa-btn').dataset.editId='';document.getElementById('save-trattativa-btn').innerHTML='<i class=\'ti ti-check\'></i> Salva trattativa'"><i class="ti ti-x"></i></button>
+    </div>
+    <div style="padding:8px 17px 0;background:var(--gray);border-bottom:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;padding:6px 0">👤 Anagrafica cliente</div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group form-full"><div class="form-label">Nome cliente / Azienda <span class="form-req">*</span></div><input id="tr-cliente" type="text" placeholder="es. Ferrari Srl, Mario Rossi..."></div>
+      <div class="form-group"><div class="form-label">Città</div><input id="tr-citta" type="text" placeholder="es. Bari, Corato..."></div>
+      <div class="form-group"><div class="form-label">Tipo</div>
+        <select id="tr-tipo">
+          <option value="Azienda">Azienda</option>
+          <option value="Privato">Privato</option>
+          <option value="Libero professionista">Libero professionista</option>
+          <option value="PA">PA</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">Telefono</div><input id="tr-tel" type="tel" placeholder="+39 333 000 0000"></div>
+      <div class="form-group"><div class="form-label">Email</div><input id="tr-email" type="email" placeholder="nome@email.it"></div>
+    </div>
+    <div style="padding:8px 17px 0;background:var(--gray);border-bottom:1px solid var(--border);border-top:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;padding:6px 0">🚗 Dettagli trattativa</div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><div class="form-label">Prodotto</div>
+        <select id="tr-prodotto">
+          <option value="">— Seleziona —</option>
+          <option>NLT — Noleggio Lungo Termine</option>
+          <option>Leasing</option>
+          <option>Acquisto diretto</option>
+          <option>Noleggio Breve Termine</option>
+          <option>Fleet Management</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">Tipo veicolo</div>
+        <select id="tr-tipo-veicolo">
+          <option value="">— Seleziona —</option>
+          <option>Auto / SUV</option>
+          <option>Veicolo Commerciale</option>
+          <option>Truck / Industriale</option>
+          <option>Semirimorchio</option>
+          <option>E-Mobility</option>
+        </select>
+      </div>
+      <div class="form-group form-full"><div class="form-label">Marca e modello veicolo</div><input id="tr-veicolo" type="text" placeholder="es. Ford Transit 350, BMW X5..."></div>
+      <div class="form-group"><div class="form-label">Valore stimato (€)</div><input id="tr-valore" type="number" placeholder="es. 35000" min="0" step="0.01"></div>
+      <div class="form-group"><div class="form-label">Probabilità chiusura (%)</div><input id="tr-probabilita" type="number" placeholder="es. 70" min="0" max="100" step="5"></div>
+      <div class="form-group"><div class="form-label">Fase <span class="form-req">*</span></div>
+        <select id="tr-fase-input">
+          <option value="In lavorazione">In lavorazione</option>
+          <option value="Preventivo inviato">Preventivo inviato</option>
+          <option value="In chiusura">In chiusura</option>
+          <option value="Vinta">Vinta</option>
+          <option value="Persa">Persa</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">Data chiusura prevista</div><input id="tr-data-chiusura" type="date"></div>
+      <div class="form-group form-full"><div class="form-label">Note</div><textarea id="tr-note" placeholder="Note sulla trattativa..."></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal('modal-trattativa')">Annulla</button>
+      <button class="btn btn-orange" id="save-trattativa-btn" onclick="salvaTrattativa()"><i class="ti ti-check"></i> Salva trattativa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TIMELINE TRATTATIVA -->
+<div class="modal-overlay" id="modal-timeline-trattativa">
+  <div class="modal" style="width:620px;max-height:85vh;display:flex;flex-direction:column">
+    <div class="modal-head" style="flex-shrink:0">
+      <div>
+        <span class="modal-title" id="trt-title">Timeline trattativa</span>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Storico attività e contatti</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-orange" onclick="document.getElementById('trt-form').style.display=document.getElementById('trt-form').style.display==='none'?'block':'none'"><i class="ti ti-plus"></i> Aggiungi</button>
+        <button class="modal-close" onclick="closeModal('modal-timeline-trattativa')"><i class="ti ti-x"></i></button>
+      </div>
+    </div>
+    <div id="trt-form" style="display:none;border-bottom:1px solid var(--border);padding:14px 16px;background:var(--gray);flex-shrink:0">
+      <div style="font-size:11px;font-weight:600;color:var(--orange);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Nuova attività</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><div class="form-label">Tipo attività <span class="form-req">*</span></div>
+          <select id="trt-tipo">
+            <option value="">— Seleziona —</option>
+            <option>Chiamata telefonica</option>
+            <option>Visita cliente</option>
+            <option>Email inviata</option>
+            <option>Preventivo inviato</option>
+            <option>Appuntamento fissato</option>
+            <option>Nota interna</option>
+          </select>
+        </div>
+        <div class="form-group"><div class="form-label">Descrizione <span class="form-req">*</span></div><input id="trt-desc" type="text" placeholder="Descrivi l'attività..."></div>
+        <div class="form-group form-full"><div class="form-label">Risposta / reazione del cliente</div><input id="trt-risposta" type="text" placeholder="Come ha risposto il cliente?"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-orange" id="trt-save-btn" onclick="salvaTlTrattativa()"><i class="ti ti-check"></i> Salva attività</button>
+      </div>
+    </div>
+    <div id="trt-content" style="overflow-y:auto;flex:1;padding:14px 16px"></div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg"></span></div>
 
@@ -887,7 +995,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div class="ni" data-sec="flotta"><i class="ti ti-car"></i> Flotta & Scadenze</div>
       <div class="ni" data-sec="lead"><i class="ti ti-user-plus"></i> Nuovo lead</div>
       <div class="ni" data-sec="veicoli"><i class="ti ti-car"></i> Veicoli</div>
-      <div class="ni" data-sec="trattative" style="display:none"><i class="ti ti-chart-bar"></i> Trattative</div>
+      <div class="ni dir-only" data-sec="trattative"><i class="ti ti-chart-bar"></i> Trattative</div>
       <div class="sb-sec">Analisi</div>
       <div class="ni" data-sec="report"><i class="ti ti-report-analytics"></i> Report &amp; KPI</div>
       <div class="ni" data-sec="contratti"><i class="ti ti-file-invoice"></i> Report Contratti</div>
@@ -896,7 +1004,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div class="sb-sec">AI &amp; Strumenti</div>
       <div class="ni" data-sec="ai"><i class="ti ti-sparkles"></i> AI Assistant <span class="bnew">AI</span></div>
       <div class="ni" data-sec="agenda"><i class="ti ti-calendar"></i> Agenda</div>
-      <div class="ni" data-sec="attivita" style="display:none"><i class="ti ti-checklist"></i> Attività</div>
+      <div class="ni dir-only" data-sec="attivita"><i class="ti ti-checklist"></i> Attività</div>
       <div class="sb-sec">Sistema</div>
       <div class="ni dir-only" data-sec="utenti"><i class="ti ti-shield-lock"></i> Gestione utenti <span class="bnew">ADM</span></div>
       <div class="ni" data-sec="impostazioni"><i class="ti ti-settings"></i> Impostazioni</div>
@@ -1815,8 +1923,8 @@ function navTo(sec) {
   if(el)el.classList.add('active');
   const bnav=document.getElementById('bnav-'+sec);
   if(bnav)bnav.classList.add('active');
-  // Push state for browser back button
-  history.pushState({sec}, '', '?sec='+sec);
+  // Hash-based navigation for browser back button
+  if(history.state?.sec !== sec) history.pushState({sec}, '', '#'+sec);
   const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti','report-lead':'Report Lead',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
   document.getElementById('page-title').textContent=titles[sec]||sec;
   currentSec=sec;
@@ -2014,1053 +2122,220 @@ async function rVeicoli(){
 // ═══════════════════════════════════════════
 async function rTrattative(){
   let data=[];
-  try{const r=await queryTrattative();data=r.data||[];}catch(e){console.log('Trattative:',e.message);}
-  document.getElementById('content').innerHTML=`
-  <div class="full-card">
-    <div class="card-head"><span class="card-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:6px"></i>${isDir()?'Tutte le trattative':'Le mie trattative'} — ${data.length}</span>
-      <button class="btn btn-sm btn-navy"><i class="ti ti-plus"></i> Nuova trattativa</button>
-    </div>
-    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Veicolo / Servizio</th><th>Valore</th><th>Fase</th>${isDir()?'<th>Venditore</th>':''}<th>Probabilità</th><th>Scadenza</th></tr></thead><tbody>
-    ${data.map(t=>`<tr>
-      <td style="font-weight:600">${t.cliente_nome||'—'}</td>
-      <td style="color:var(--text2)">${t.veicolo||'—'}</td>
-      <td style="font-weight:700;color:var(--navy)">${t.valore||'—'}</td>
-      <td>${badge(t.fase||'—',t.fase==='In chiusura'?'bg-go':t.fase==='Proposta'?'bg-o':t.fase==='Test drive'?'bg-n':'bg-gr')}</td>
-      ${isDir()?`<td><span style="font-size:11.5px;font-weight:600;color:var(--navy)">${t.venditore_nome||'—'}</span></td>`:''}
-      <td><div style="display:flex;align-items:center;gap:7px">${prog(t.probabilita||0,(t.probabilita||0)>80?'var(--navy)':'var(--orange)')}<span style="font-size:11.5px;font-weight:700">${t.probabilita||0}%</span></div></td>
-      <td style="color:var(--text2)">${t.scadenza||'—'}</td>
-    </tr>`).join('')}
-    </tbody></table></div>
-  </div>`;
-}
-
-// ═══════════════════════════════════════════
-// VISTA DIREZIONE (solo dir/admin)
-// ═══════════════════════════════════════════
-async function rDirOverview(){
-  if(!isDir()){document.getElementById('content').innerHTML='<div style="padding:30px;text-align:center;color:var(--red)">Accesso riservato.</div>';return;}
-  let utenti=[],clienti=[],trattative=[],contratti=[];
   try{
-    const[r1,r2,r3,r4]=await Promise.all([
-      sb.from('crm_utenti').select('*').eq('attivo',true),
-      sb.from('clienti').select('*'),
-      sb.from('trattative').select('*'),
-      sb.from('contratti_chiusi').select('*').order('created_at',{ascending:false})
-    ]);
-    utenti=r1.data||[];clienti=r2.data||[];trattative=r3.data||[];contratti=r4.data||[];
-  }catch(e){}
+    let q=sb.from('trattative').select('*').order('created_at',{ascending:false});
+    if(!canViewAll())q=q.eq('venditore_id',CU.id);
+    const r=await q;data=r.data||[];
+  }catch(e){console.log('Trattative:',e.message);}
 
-  // Filtra solo i venditori
-  const venditori=utenti.filter(u=>u.ruolo==='venditore');
-  
-  const meseCorrente=new Date().toISOString().slice(0,7);
-  
-  const stats=venditori.map(u=>({
-    nome:u.nome,
-    ruolo_label:u.ruolo_label||'Consulente',
-    init:u.nome.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2),
-    clienti:clienti.filter(c=>c.venditore_id===u.id).length,
-    lead:clienti.filter(c=>c.venditore_id===u.id&&c.stato==='Lead').length,
-    trattative:trattative.filter(t=>t.venditore_id===u.id).length,
-    chiusura:trattative.filter(t=>t.venditore_id===u.id&&t.fase==='In chiusura').length,
-    contratti_mese:contratti.filter(c=>c.venditore_id===u.id&&c.mese===meseCorrente).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0),
-    margine_mese:contratti.filter(c=>c.venditore_id===u.id&&c.mese===meseCorrente).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0),
-    contratti_tot:contratti.filter(c=>c.venditore_id===u.id).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0),
-    margine_tot:contratti.filter(c=>c.venditore_id===u.id).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0),
-  }));
-
-  // KPI totali
-  const totClienti=clienti.length;
-  const totTrattative=trattative.length;
-  const totContratti=contratti.filter(c=>c.mese===meseCorrente).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
-  const totMargine=contratti.filter(c=>c.mese===meseCorrente).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
+  const fasi=['In lavorazione','Preventivo inviato','In chiusura','Vinta','Persa'];
+  const fasiColors={'In lavorazione':'bg-n','Preventivo inviato':'bg-o','In chiusura':'bg-go','Vinta':'bg-g','Persa':'bg-r'};
+  const byFase={};
+  fasi.forEach(f=>byFase[f]=0);
+  data.forEach(t=>{const f=t.fase||'In lavorazione';if(byFase[f]!==undefined)byFase[f]++;});
 
   document.getElementById('content').innerHTML=`
   <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Clienti totali</div><div class="kpi-v">${totClienti}</div><div class="kpi-d" style="color:var(--text3)">Tutti i venditori</div></div>
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Trattative attive</div><div class="kpi-v">${totTrattative}</div><div class="kpi-d" style="color:var(--text3)">Pipeline totale</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Pezzi mese corrente</div><div class="kpi-v">${totContratti}</div><div class="kpi-d" style="color:var(--text3)">${new Date().toLocaleString('it-IT',{month:'long',year:'numeric'})}</div></div>
-    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Margine mese corrente</div><div class="kpi-v">€ ${totMargine.toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">Totale team</div></div>
+    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Trattative totali</div><div class="kpi-v">${data.length}</div><div class="kpi-d" style="color:var(--text3)">Storico completo</div></div>
+    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">In lavorazione</div><div class="kpi-v" style="color:var(--orange)">${byFase['In lavorazione']||0}</div><div class="kpi-d" style="color:var(--text3)">Da lavorare</div></div>
+    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">In chiusura</div><div class="kpi-v" style="color:var(--gold)">${byFase['In chiusura']||0}</div><div class="kpi-d" style="color:var(--text3)">Quasi chiuse</div></div>
+    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Vinte</div><div class="kpi-v" style="color:var(--green)">${byFase['Vinta']||0}</div><div class="kpi-d" style="color:var(--text3)">Contratti chiusi</div></div>
   </div>
-
   <div class="full-card">
     <div class="card-head">
-      <span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Performance team — aggiornamento in tempo reale</span>
-      <button class="btn btn-sm" onclick="renderSec('dir-overview')"><i class="ti ti-refresh"></i> Aggiorna</button>
-    </div>
-    <div class="tbl-wrap"><table class="tbl">
-      <thead><tr>
-        <th>Consulente</th><th>Ruolo</th><th>Clienti</th><th>Lead</th><th>Trattative</th><th>In chiusura</th><th>Pezzi mese</th><th>Margine mese</th><th>Pezzi totali</th><th>Margine totale</th>
-      </tr></thead>
-      <tbody>
-      ${stats.sort((a,b)=>b.margine_mese-a.margine_mese).map(u=>`<tr>
-        <td><div style="display:flex;align-items:center;gap:8px"><div class="uav" style="width:32px;height:32px;font-size:11px">${u.init}</div><strong>${u.nome}</strong></div></td>
-        <td style="font-size:11px;color:var(--text2)">${u.ruolo_label}</td>
-        <td style="text-align:center">${u.clienti}</td>
-        <td style="text-align:center;color:var(--orange)">${u.lead}</td>
-        <td style="text-align:center">${u.trattative}</td>
-        <td style="text-align:center;color:${u.chiusura>0?'var(--green)':'var(--text3)'};font-weight:${u.chiusura>0?'700':'400'}">${u.chiusura}</td>
-        <td style="text-align:center;font-weight:700;color:var(--navy)">${u.contratti_mese}</td>
-        <td style="font-weight:700;color:var(--orange)">€ ${u.margine_mese.toLocaleString('it-IT')}</td>
-        <td style="text-align:center;color:var(--text2)">${u.contratti_tot}</td>
-        <td style="color:var(--text2)">€ ${u.margine_tot.toLocaleString('it-IT')}</td>
-      </tr>`).join('')}
-      ${stats.length===0?'<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text3)">Nessun venditore trovato</td></tr>':''}
-      </tbody>
-    </table></div>
-  </div>
-
-  <div class="full-card">
-    <div class="card-head"><span class="card-title"><i class="ti ti-file-invoice" style="color:var(--orange);margin-right:6px"></i>Ultimi contratti inseriti — tutti i venditori</span></div>
-    <div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th>Data</th><th>Venditore</th><th>Cliente</th><th>Prodotto</th><th>Pezzi</th><th>Margine unit.</th><th>Totale</th><th>Partner</th></tr></thead>
-      <tbody>
-      ${contratti.slice(0,20).map(c=>`<tr>
-        <td style="color:var(--text2);font-size:11px">${new Date(c.created_at).toLocaleDateString('it-IT')}</td>
-        <td style="font-weight:600;font-size:11.5px">${c.venditore_nome||'—'}</td>
-        <td>${c.cliente||'—'}</td>
-        <td style="font-size:11px;color:var(--text2)">${c.prodotto||'—'}</td>
-        <td style="text-align:center;font-weight:700">${c.pezzi||1}</td>
-        <td style="color:var(--orange)">€ ${(parseFloat(c.margine)||0).toLocaleString('it-IT')}</td>
-        <td style="font-weight:700;color:var(--orange)">€ ${((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)).toLocaleString('it-IT')}</td>
-        <td style="font-size:11px;color:var(--text2)">${c.partner||'—'}</td>
-      </tr>`).join('')}
-      ${contratti.length===0?'<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">Nessun contratto inserito</td></tr>':''}
-      </tbody>
-    </table></div>
-  </div>`;
-}
-
-
-async function rReport(){
-  let cl=0,tr=0,vei=0,contratti=[];
-  try{
-    const[r1,r2,r3,r4]=await Promise.all([
-      queryClienti().select('id',{count:'exact'}),
-      queryTrattative().select('id',{count:'exact'}),
-      sb.from('flotta_veicoli').select('id',{count:'exact'}),
-      (()=>{let q=sb.from('contratti_chiusi').select('margine,pezzi');if(!isDir())q=q.eq('venditore_id',CU.id);return q;})()
-    ]);
-    cl=r1.count||0; tr=r2.count||0; vei=r3.count||0;
-    contratti=r4.data||[];
-  }catch(e){}
-
-  const totMargine=contratti.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
-  const totPezzi=contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||0),0);
-
-  let fasi={Contatto:0,Proposta:0,'Test drive':0,'In chiusura':0,Chiuso:0};
-  try{ const{data:td}=await queryTrattative().select('fase'); (td||[]).forEach(t=>{if(fasi[t.fase]!==undefined)fasi[t.fase]++;}); }catch(e){}
-  const maxFase=Math.max(...Object.values(fasi),1);
-
-  let fonti={};
-  try{ const{data:fd}=await queryClienti().select('fonte'); (fd||[]).forEach(c=>{if(c.fonte)fonti[c.fonte]=(fonti[c.fonte]||0)+1;}); }catch(e){}
-  const totFonti=Object.values(fonti).reduce((s,v)=>s+v,0)||1;
-  const fontiSorted=Object.entries(fonti).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-  document.getElementById('content').innerHTML=`
-  <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">${isDir()?'Clienti totali':'Miei clienti'}</div><div class="kpi-v">${cl}</div><div class="kpi-d" style="color:var(--text3)">Database live</div></div>
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">${isDir()?'Trattative':'Mie trattative'}</div><div class="kpi-v">${tr}</div><div class="kpi-d" style="color:var(--text3)">Pipeline attivo</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Margine contratti</div><div class="kpi-v">€ ${totMargine.toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">${totPezzi} pezzi totali</div></div>
-    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Veicoli in flotta</div><div class="kpi-v">${vei}</div><div class="kpi-d" style="color:var(--text3)">Gestiti dal team</div></div>
-  </div>
-  <div class="row2">
-    <div class="card">
-      <div class="card-head"><span class="card-title">Fonti acquisizione clienti</span></div>
-      <div style="padding:15px 17px">
-        ${fontiSorted.length===0
-          ?'<div style="padding:20px;text-align:center;color:var(--text3)">Nessun dato — inserisci i primi clienti</div>'
-          :fontiSorted.map(([l,n])=>`<div class="rb-row"><span class="rb-label" style="width:200px">${l}</span><div class="prog" style="flex:1"><div class="prog-fill" style="width:${Math.round(n/totFonti*100)}%;background:var(--orange)"></div></div><span class="rb-val">${n}</span></div>`).join('')}
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">Pipeline per fase</span></div>
-      <div style="padding:15px 17px">
-        ${Object.values(fasi).every(v=>v===0)
-          ?'<div style="padding:20px;text-align:center;color:var(--text3)">Nessuna trattativa — inizia ad inserire dati</div>'
-          :Object.entries(fasi).map(([l,n])=>`<div class="rb-row"><span class="rb-label">${l}</span><div class="prog" style="flex:1"><div class="prog-fill" style="width:${Math.round(n/maxFase*100)}%;background:${n===Math.max(...Object.values(fasi))?'var(--navy)':'var(--orange)'}"></div></div><span class="rb-val">${n}</span></div>`).join('')}
-      </div>
-    </div>
-  </div>`;}
-
-
-// ═══════════════════════════════════════════
-// REPORT CONTRATTI
-// ═══════════════════════════════════════════
-async function rContratti(){
-  let contratti=[];
-  try{
-    let q=sb.from('contratti_chiusi').select('*').order('created_at',{ascending:false});
-    if(!isDir()) q=q.eq('venditore_id',CU.id);
-    const r=await q;
-    contratti=r.data||[];
-  }catch(e){}
-
-  // Calcola statistiche
-  const meseCorrente=new Date().toISOString().slice(0,7);
-  const mesePrecedente=new Date(new Date().setMonth(new Date().getMonth()-1)).toISOString().slice(0,7);
-  const thisMonth=contratti.filter(c=>c.mese===meseCorrente);
-  const lastMonth=contratti.filter(c=>c.mese===mesePrecedente);
-  const totMargine=thisMonth.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
-  const totMarginePrec=lastMonth.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
-  const diffContratti=thisMonth.length-lastMonth.length;
-  const diffPezzi=thisMonth.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0)-lastMonth.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
-  const diffMargine=totMargine-totMarginePrec;
-
-  // Raggruppa per mese per il venditore corrente
-  const mesi={};
-  contratti.forEach(c=>{
-    if(!mesi[c.mese])mesi[c.mese]={contratti:[],totPezzi:0,totMargine:0,totBonus:0,totSegnalazione:0};
-    mesi[c.mese].contratti.push(c);
-    mesi[c.mese].totMargine+=(parseFloat(c.margine)||0);
-    mesi[c.mese].totBonus+=(parseFloat(c.bonus)||0);
-    mesi[c.mese].totSegnalazione+=(parseFloat(c.margine_segnalazione)||0);
-  });
-
-  const mesiOrdinati=Object.keys(mesi).sort().reverse();
-
-  // Filtro mese per export
-  const mesiDisp=[...new Set(contratti.map(c=>c.mese))].sort().reverse();
-
-  document.getElementById('content').innerHTML=`
-  <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Contratti mese corrente</div><div class="kpi-v">${thisMonth.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0)}</div><div class="kpi-d ${diffContratti>=0?'du':'dd'}">${diffContratti>=0?'↑':'↓'} ${Math.abs(diffContratti)} contratti vs prec.</div></div>
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Margine mese corrente</div><div class="kpi-v">€ ${totMargine.toLocaleString('it-IT',{minimumFractionDigits:0})}</div><div class="kpi-d ${diffMargine>=0?'du':'dd'}">${diffMargine>=0?'↑':'↓'} € ${Math.abs(diffMargine).toLocaleString('it-IT')} vs prec.</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Contratti totali</div><div class="kpi-v">${contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0)}</div><div class="kpi-d" style="color:var(--text3)">Pezzi totali</div></div>
-    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Margine totale</div><div class="kpi-v">€ ${contratti.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0).toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">Storico completo</div></div>
-  </div>
-
-  <div class="full-card">
-    <div class="card-head">
-      <span class="card-title"><i class="ti ti-file-invoice" style="color:var(--orange);margin-right:6px"></i>Contratti chiusi${isDir()?' — tutti i venditori':' — '+CU.nome}</span>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <select id="filtro-mese" class="btn btn-sm" style="cursor:pointer" onchange="filtraContratti()">
-          <option value="">Tutti i mesi</option>
-          ${mesiDisp.map(m=>`<option value="${m}">${formatMese(m)}</option>`).join('')}
+      <span class="card-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:6px"></i>${canViewAll()?'Tutte le trattative — team':'Le mie trattative'} — ${data.length}</span>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <select id="tr-fase" class="btn btn-sm" style="cursor:pointer" onchange="filtroTrattative()">
+          <option value="">Tutte le fasi</option>
+          ${fasi.map(f=>`<option value="${f}">${f}</option>`).join('')}
         </select>
-        ${isDir()?`<select id="filtro-venditore" class="btn btn-sm" style="cursor:pointer" onchange="aggiornaFiltroContratti()"><option value="">Tutti i venditori</option></select>`:''}
-        <button class="btn btn-sm" onclick="esportaExcel()"><i class="ti ti-file-spreadsheet"></i> Scarica Excel</button>
-        <button class="btn btn-sm btn-orange" onclick="openModal('modal-contratto')"><i class="ti ti-plus"></i> Nuovo contratto</button>
+        ${canViewAll()?`<select id="tr-vend" class="btn btn-sm" style="cursor:pointer" onchange="filtroTrattative()"><option value="">Tutti i consulenti</option></select>`:''}
+        <button class="btn btn-sm btn-orange" onclick="openModal('modal-trattativa')"><i class="ti ti-plus"></i> Nuova trattativa</button>
       </div>
     </div>
-
-    ${mesiOrdinati.length===0?`<div style="padding:40px;text-align:center;color:var(--text3)">Nessun contratto inserito. Clicca "Nuovo contratto" per iniziare.</div>`:''}
-
-    ${mesiOrdinati.map(mese=>{
-      const m=mesi[mese];
-      return `
-      <div style="border-bottom:2px solid var(--border)">
-        <div style="padding:12px 18px;background:var(--gray);display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:13px;font-weight:700;color:var(--navy)">${formatMese(mese)}</div>
-          <div style="display:flex;gap:16px;font-size:12px">
-            <span><strong>${m.contratti.length}</strong> contratti</span>
-            <span><strong>${m.totPezzi||0}</strong> pezzi</span>
-            <span>Margine: <strong style="color:var(--orange)">€ ${m.totMargine.toLocaleString('it-IT')}</strong></span>
-            ${m.totBonus>0?`<span>Bonus: <strong style="color:var(--green)">€ ${m.totBonus.toLocaleString('it-IT')}</strong></span>`:''}
-            ${m.totSegnalazione>0?`<span>Segnalazione: <strong style="color:var(--gold)">€ ${m.totSegnalazione.toLocaleString('it-IT')}</strong></span>`:''}
-            <button class="btn btn-sm" onclick="stampaMese('${mese}')" style="padding:3px 9px;font-size:11px"><i class="ti ti-printer"></i> Stampa</button>
+    <div id="tr-container" style="padding:8px">
+      ${data.map(t=>{
+        const f=t.fase||'In lavorazione';
+        const lid=t.id;
+        const lnome=(t.cliente_nome||'').replace(/'/g,'');
+        return`<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--navy)">${t.cliente_nome||'—'}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px">${t.citta||''} ${t.citta&&t.tipo?'·':''} ${t.tipo||''}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              ${badge(f,fasiColors[f]||'bg-gr')}
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-sm" onclick="apriTimelineTrattativa(${lid},'${lnome}')" title="Timeline"><i class="ti ti-timeline"></i></button>
+                ${(canViewAll()||t.venditore_id===CU.id)?`<button class="btn btn-sm" onclick="modificaTrattativa(${lid})" title="Modifica"><i class="ti ti-edit"></i></button>`:''}
+              </div>
+            </div>
           </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:10px">
+            ${t.prodotto?`<div style="font-size:11.5px;color:var(--text2)"><i class="ti ti-car" style="margin-right:4px;color:var(--text3)"></i>${t.prodotto}</div>`:''}
+            ${t.veicolo?`<div style="font-size:11.5px;color:var(--text2)"><i class="ti ti-truck" style="margin-right:4px;color:var(--text3)"></i>${t.veicolo}</div>`:''}
+            ${t.valore_stimato?`<div style="font-size:12px;font-weight:700;color:var(--orange)"><i class="ti ti-currency-euro" style="margin-right:4px"></i>${parseFloat(t.valore_stimato).toLocaleString('it-IT')}</div>`:''}
+            ${t.venditore_nome?`<div style="font-size:11.5px;color:var(--text2)"><i class="ti ti-user" style="margin-right:4px;color:var(--text3)"></i>${t.venditore_nome}</div>`:''}
+            ${t.data_chiusura_prevista?`<div style="font-size:11.5px;color:var(--text2)"><i class="ti ti-calendar" style="margin-right:4px;color:var(--text3)"></i>Chiusura: ${new Date(t.data_chiusura_prevista).toLocaleDateString('it-IT')}</div>`:''}
+            ${t.probabilita?`<div style="font-size:11.5px;font-weight:600;color:${t.probabilita>=70?'var(--green)':'var(--orange)'}"><i class="ti ti-percentage" style="margin-right:4px"></i>${t.probabilita}%</div>`:''}
+          </div>
+          ${t.note?`<div style="font-size:12px;color:var(--text2);background:var(--gray);border-radius:7px;padding:8px 10px">${t.note}</div>`:''}
+        </div>`;
+      }).join('')||'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna trattativa trovata</div>'}
+    </div>
+  </div>`;
+
+  // Popola select consulenti
+  setTimeout(async()=>{
+    const sel=document.getElementById('tr-vend');if(!sel)return;
+    try{const{data:u}=await sb.from('crm_utenti').select('id,nome').eq('attivo',true).eq('ruolo','venditore').order('nome');
+    if(u)u.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.nome;sel.appendChild(o);});}catch(e){}
+  },200);
+}
+
+async function filtroTrattative(){
+  const fase=document.getElementById('tr-fase')?.value||'';
+  const vend=document.getElementById('tr-vend')?.value||'';
+  let q=sb.from('trattative').select('*').order('created_at',{ascending:false});
+  if(!canViewAll())q=q.eq('venditore_id',CU.id);
+  if(fase)q=q.eq('fase',fase);
+  if(vend)q=q.eq('venditore_id',parseInt(vend));
+  const{data}=await q;const trats=data||[];
+  const fasi=['In lavorazione','Preventivo inviato','In chiusura','Vinta','Persa'];
+  const fasiColors={'In lavorazione':'bg-n','Preventivo inviato':'bg-o','In chiusura':'bg-go','Vinta':'bg-g','Persa':'bg-r'};
+  const cont=document.getElementById('tr-container');if(!cont)return;
+  cont.innerHTML=trats.map(t=>{
+    const f=t.fase||'In lavorazione';const lid=t.id;const lnome=(t.cliente_nome||'').replace(/'/g,'');
+    return`<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <div><div style="font-size:14px;font-weight:700;color:var(--navy)">${t.cliente_nome||'—'}</div>
+        <div style="font-size:12px;color:var(--text2)">${t.citta||''} ${t.venditore_nome?'· '+t.venditore_nome:''}</div></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${badge(f,fasiColors[f]||'bg-gr')}
+          <button class="btn btn-sm" onclick="apriTimelineTrattativa(${lid},'${lnome}')"><i class="ti ti-timeline"></i></button>
+          ${(canViewAll()||t.venditore_id===CU.id)?`<button class="btn btn-sm" onclick="modificaTrattativa(${lid})"><i class="ti ti-edit"></i></button>`:''}
         </div>
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr>
-            <th>Cliente</th>
-            <th>Città</th>
-            <th>Pezzi</th>
-            <th>Prodotto</th>
-            <th>Veicolo / Contratto</th>
-            <th>Provenienza</th>
-            <th>Partner</th>
-            ${isDir()?'<th>Venditore</th>':''}
-            <th>Collega</th>
-            <th>Margine</th>
-            <th>Bonus</th>
-            <th>Segnalazione</th>
-            <th>Segnalatore</th>
-            <th>PDF</th>
-            <th>Azioni</th>
-          </tr></thead>
-          <tbody>
-          ${m.contratti.map(c=>`<tr>
-            <td style="font-weight:600">${c.cliente||'—'}</td>
-            <td style="color:var(--text2)">${c.citta||'—'}</td>
-            <td style="text-align:center;font-weight:700;color:var(--navy)">${c.pezzi||1}</td>
-            <td><span style="font-size:11px;font-weight:600;color:var(--navy)">${c.prodotto||'—'}</span></td>
-            <td style="color:var(--text2)">${c.veicolo||'—'}</td>
-            <td>${c.provenienza?`<span class="badge ${c.provenienza==='LEAD DA FACILE.IT'?'bg-b':c.provenienza==='LEAD DA DIALOGO'?'bg-n':c.provenienza==='LEAD DA SEGNALATORE'?'bg-go':'bg-gr'}" style="font-size:10px">${c.provenienza.replace('LEAD DA ','')}</span>`:'<span style="color:var(--text3);font-size:11px">Diretto</span>'}</td>
-            <td style="color:var(--text2)">${c.partner||'—'}</td>
-            ${isDir()?`<td style="font-size:11.5px;font-weight:600;color:var(--navy)">${c.venditore_nome||'—'}</td>`:''}
-            <td style="color:var(--text2)">${c.collega||'—'}</td>
-            <td>
-        <div style="font-weight:700;color:var(--orange)">€ ${(parseFloat(c.margine)||0).toLocaleString('it-IT')}</div>
-        ${(parseInt(c.pezzi)||1)>1?`<div style="font-size:10px;color:var(--text3)">Totale: € ${((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)).toLocaleString('it-IT')}</div>`:''}
-      </td>
-            <td style="color:var(--green)">${c.bonus?'€ '+parseFloat(c.bonus).toLocaleString('it-IT'):'—'}</td>
-            <td style="color:var(--gold)">${c.margine_segnalazione?'€ '+parseFloat(c.margine_segnalazione).toLocaleString('it-IT'):'—'}</td>
-            <td style="color:var(--text2);font-size:11.5px">${c.segnalatore||'—'}</td>
-            <td>${(()=>{
-        try{
-          const pdfs=c.pdf_urls?JSON.parse(c.pdf_urls):c.pdf_url?[{nome:'PDF',url:c.pdf_url}]:[];
-          if(!pdfs.length)return'—';
-          return pdfs.map((p,i)=>`<div style="display:flex;gap:3px;margin-bottom:2px">
-            <a href="${p.url}" target="_blank" class="btn btn-sm" style="padding:3px 8px;font-size:10px"><i class="ti ti-file-type-pdf"></i> PDF ${pdfs.length>1?i+1:''}</a>
-            <button class="btn btn-sm btn-red" style="padding:3px 6px;font-size:10px" onclick="eliminaPdf(${c.id},${i})" title="Elimina PDF"><i class="ti ti-trash"></i></button>
-          </div>`).join('');
-        }catch(e){return c.pdf_url?`<a href="${c.pdf_url}" target="_blank" class="btn btn-sm" style="padding:3px 8px;font-size:10px"><i class="ti ti-file-type-pdf"></i> PDF</a>`:'—';}
-      })()}</td>
-            <td><div style="display:flex;gap:3px">
-        <button class="btn btn-sm" style="padding:3px 8px;font-size:10px" onclick="modificaContratto(${c.id})"><i class="ti ti-edit"></i></button>
-        <button class="btn btn-sm btn-red" style="padding:3px 8px;font-size:10px" onclick="eliminaContratto(${c.id})"><i class="ti ti-trash"></i></button>
-      </div></td>
-          </tr>`).join('')}
-          </tbody>
-        </table></div>
-      </div>`;
-    }).join('')}
-  </div>`;
-}
-
-// ═══════════════════════════════════════════
-// FLOTTA & SCADENZE
-// ═══════════════════════════════════════════
-async function convertiCliente(id){
-  if(!confirm('Convertire questo lead in cliente confermato?'))return;
-  try{
-    const{error}=await sb.from('clienti').update({stato:'Attivo'}).eq('id',id);
-    if(error)throw error;
-    showToast('Lead convertito in cliente!');
-    renderSec('scheda');
-  }catch(e){showToast('Errore: '+e.message);}
-}
-
-async function rFlotta(){
-  let clienti=[],veicoli=[];
-  try{
-    let qc=sb.from('clienti').select('*').order('nome');
-    if(!isDir()) qc=qc.eq('venditore_id',CU.id);
-    const rc=await qc;
-    clienti=rc.data||[];
-
-    let qv=sb.from('flotta_veicoli').select('*').order('data_scadenza');
-    if(!isDir()) qv=qv.eq('venditore_id',CU.id);
-    const rv=await qv;
-    veicoli=rv.data||[];
-  }catch(e){}
-
-  const oggi=new Date();
-  const tra4mesi=new Date(oggi);
-  tra4mesi.setMonth(tra4mesi.getMonth()+4);
-
-  const scadenze=veicoli.filter(v=>{
-    if(!v.data_scadenza)return false;
-    const d=new Date(v.data_scadenza);
-    return d<=tra4mesi;
-  }).sort((a,b)=>new Date(a.data_scadenza)-new Date(b.data_scadenza));
-
-  const urgenti=scadenze.filter(v=>gg(v.data_scadenza)<=30);
-  const prossime=scadenze.filter(v=>gg(v.data_scadenza)>30&&gg(v.data_scadenza)<=120);
-
-  function gg(d){
-    return Math.ceil((new Date(d)-oggi)/(1000*60*60*24));
-  }
-  function fData(d){
-    if(!d)return'—';
-    return new Date(d).toLocaleDateString('it-IT');
-  }
-  function urgBadge(d){
-    const g=gg(d);
-    if(g<=30)return'<span class="badge bg-r">Urgente</span>';
-    if(g<=60)return'<span class="badge bg-o">Prossimo</span>';
-    return'<span class="badge bg-go">Pianifica</span>';
-  }
-
-  document.getElementById('content').innerHTML=`
-  <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--red-bg)"><div class="kpi-l">Scadenze urgenti ≤30gg</div><div class="kpi-v" style="color:#991B1B">${urgenti.length}</div><div class="kpi-d dd">Contattare subito</div></div>
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Scadenze entro 4 mesi</div><div class="kpi-v">${scadenze.length}</div><div class="kpi-d du">Da pianificare</div></div>
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Veicoli in flotta</div><div class="kpi-v">${veicoli.length}</div><div class="kpi-d" style="color:var(--text3)">Totale gestiti</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Clienti attivi</div><div class="kpi-v">${clienti.filter(c=>c.stato==='Attivo'||c.stato==='VIP').length}</div><div class="kpi-d du">Database live</div></div>
-  </div>
-
-  ${urgenti.length>0?`<div style="background:var(--red-bg);border:1px solid #F09595;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px">
-    <i class="ti ti-alert-triangle" style="font-size:20px;color:#991B1B;flex-shrink:0"></i>
-    <div><div style="font-size:13px;font-weight:600;color:#991B1B">${urgenti.length} contratt${urgenti.length===1?'o':'i'} in scadenza entro 30 giorni</div><div style="font-size:12px;color:#991B1B;margin-top:2px">Contatta subito i clienti per avviare il rinnovo</div></div>
-  </div>`:''}
-
-  ${prossime.length>0?`<div style="background:var(--orange-light);border:1px solid #F0997B;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px">
-    <i class="ti ti-clock" style="font-size:20px;color:var(--orange);flex-shrink:0"></i>
-    <div><div style="font-size:13px;font-weight:600;color:var(--orange)">${prossime.length} contratt${prossime.length===1?'o':'i'} in scadenza entro 30-120 giorni</div><div style="font-size:12px;color:var(--orange);margin-top:2px">Pianifica i contatti per i rinnovi</div></div>
-  </div>`:''}
-
-  <div class="full-card">
-    <div class="card-head">
-      <span class="card-title"><i class="ti ti-calendar-event" style="color:var(--orange);margin-right:6px"></i>Scadenze contratti — prossimi 4 mesi</span>
-      <div style="display:flex;gap:7px">
-        ${isDir()?`<select class="btn btn-sm" style="cursor:pointer"><option>Tutti i venditori</option></select>`:''}
-        <button class="btn btn-sm btn-orange" onclick="openModal('modal-veicolo')"><i class="ti ti-plus"></i> Aggiungi veicolo</button>
       </div>
-    </div>
-    ${scadenze.length===0?`<div style="padding:40px;text-align:center;color:var(--text3)">Nessuna scadenza nei prossimi 4 mesi.</div>`:''}
-    <div class="tbl-wrap"><table class="tbl"><thead><tr>
-      <th>Cliente</th><th>Modello</th><th>Targa</th><th>Categoria</th><th>Contratto</th><th>Scadenza</th><th>Giorni</th>${isDir()?'<th>Venditore</th>':''}<th>Urgenza</th><th>Azioni</th>
-    </tr></thead><tbody>
-    ${scadenze.map(v=>`<tr>
-      <td style="font-weight:600">${v.cliente_nome||'—'}</td>
-      <td style="color:var(--text2)">${v.modello||'—'}</td>
-      <td><span style="font-family:monospace;font-size:11px;background:var(--gray);padding:2px 7px;border-radius:4px">${v.targa||'—'}</span></td>
-      <td><span class="badge ${v.categoria==='Auto / SUV'?'bg-n':v.categoria==='Commerciale'?'bg-o':v.categoria==='Truck / Industriale'?'bg-r':'bg-gr'}">${v.categoria||'—'}</span></td>
-      <td><span class="badge bg-n">${v.tipo_contratto||'—'}</span></td>
-      <td style="font-weight:600">${fData(v.data_scadenza)}</td>
-      <td><div style="display:flex;align-items:center;gap:7px">
-        <div class="prog" style="width:55px"><div class="prog-fill" style="width:${Math.min(100,gg(v.data_scadenza))}%;background:${gg(v.data_scadenza)<=30?'#E24B4A':gg(v.data_scadenza)<=60?'var(--orange)':'#639922'}"></div></div>
-        <span style="font-size:11.5px;font-weight:600;color:${gg(v.data_scadenza)<=30?'#991B1B':gg(v.data_scadenza)<=60?'var(--orange)':'var(--green)'}">${gg(v.data_scadenza)} gg</span>
-      </div></td>
-      ${isDir()?`<td style="font-size:11.5px;color:var(--text2)">${v.venditore_nome||'—'}</td>`:''}
-      <td>${urgBadge(v.data_scadenza)}</td>
-      <td><div style="display:flex;gap:4px">
-        <button class="btn btn-sm"><i class="ti ti-phone"></i></button>
-        <button class="btn btn-sm"><i class="ti ti-mail"></i></button>
-      </div></td>
-    </tr>`).join('')}
-    </tbody></table></div>
-  </div>
-
-  <div class="full-card">
-    <div class="card-head">
-      <span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Clienti & flotta completa</span>
-      <div style="display:flex;gap:7px">
-        <select class="btn btn-sm" style="cursor:pointer"><option>Tutti</option><option>Clienti</option><option>Lead</option></select>
-        <button class="btn btn-sm btn-navy" onclick="openModal('modal-nuovo-cliente-flotta')"><i class="ti ti-user-plus"></i> Nuovo cliente</button>
-      </div>
-    </div>
-    <div class="tbl-wrap"><table class="tbl"><thead><tr>
-      <th>Cliente</th><th>Città</th><th>Tipo</th><th>Veicoli</th>${isDir()?'<th>Venditore</th>':''}<th>Stato</th><th>Azioni</th>
-    </tr></thead><tbody>
-    ${clienti.map(c=>{
-      const cv=veicoli.filter(v=>v.cliente_id===c.id);
-      const haScad=cv.some(v=>v.data_scadenza&&gg(v.data_scadenza)<=120);
-      return`<tr onclick="openClient(${c.id})">
-        <td><div style="display:flex;align-items:center;gap:8px">${mav((c.nome||'').slice(0,2).toUpperCase())}<div><div style="font-weight:600">${c.nome}</div><div style="font-size:10.5px;color:var(--text3)">${c.email||''}</div></div></div></td>
-        <td style="color:var(--text2)">${c.citta||'—'}</td>
-        <td>${badge(c.tipo||'Privato',c.tipo==='Azienda'?'bg-n':'bg-gr')}</td>
-        <td><div style="display:flex;align-items:center;gap:6px"><span style="font-weight:600">${cv.length}</span>${haScad?'<span class="badge bg-r" style="font-size:9px">Scad.</span>':''}</div></td>
-        ${isDir()?`<td style="font-size:11.5px;color:var(--text2)">${c.venditore_nome||'—'}</td>`:''}
-        <td>${stBadge(c.stato||'Lead')}</td>
-        <td><div style="display:flex;gap:5px">
-          ${c.stato==='Lead'?`<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:#9FE1CB" onclick="event.stopPropagation();convertiCliente(${c.id})"><i class="ti ti-user-check"></i> Converti</button>`:''}
-          <button class="btn btn-sm" onclick="event.stopPropagation();window._currentTimelineNome='${c.nome}';openTimeline(${c.id})" title="Vedi timeline attività"><i class="ti ti-timeline"></i></button>
-          <button class="btn btn-sm" onclick="event.stopPropagation();openClient(${c.id})"><i class="ti ti-edit"></i></button>
-        </div></td>
-      </tr>`;
-    }).join('')}
-    </tbody></table></div>
-  </div>`;
+      ${t.prodotto||t.veicolo||t.valore_stimato?`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+        ${t.prodotto?`<span style="font-size:11.5px;color:var(--text2)">${t.prodotto}</span>`:''}
+        ${t.veicolo?`<span style="font-size:11.5px;color:var(--text2)">${t.veicolo}</span>`:''}
+        ${t.valore_stimato?`<span style="font-size:12px;font-weight:700;color:var(--orange)">€ ${parseFloat(t.valore_stimato).toLocaleString('it-IT')}</span>`:''}
+      </div>`:''}
+      ${t.note?`<div style="font-size:12px;color:var(--text2);background:var(--gray);border-radius:7px;padding:7px 10px">${t.note}</div>`:''}
+    </div>`;
+  }).join('')||'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna trattativa trovata</div>';
 }
 
-function toggleCampiNoleggio(val){
-  const isAcquisto = val === 'Acquisto diretto';
-  const ids = ['c-durata','c-data-inizio','c-data-fine'];
-  const reqIds = ['c-durata-req','c-data-inizio-req','c-data-fine-req'];
-  ids.forEach((id, i) => {
-    const el = document.getElementById(id);
-    const req = document.getElementById(reqIds[i]);
-    const fg = el ? el.closest('.form-group') : null;
-    if(fg){
-      fg.style.display = isAcquisto ? 'none' : '';
-    }
-    if(el && isAcquisto){ el.value=''; el.style.borderColor=''; el.style.boxShadow=''; }
-    if(req) req.style.display = isAcquisto ? 'none' : '';
-  });
-}
-
-function toggleHorizon(val){
-  const grp=document.getElementById('c-horizon-grp');
-  if(grp)grp.style.display=val==='HORIZON AUTOMOTIVE'?'flex':'none';
-  if(grp)grp.style.flexDirection='column';
-  if(grp)grp.style.gap='4px';
-  if(val!=='HORIZON AUTOMOTIVE'){
-    const s=document.getElementById('c-horizon-societa');
-    if(s)s.value='';
-  }
-}
-
-function toggleCampiBO(val){
-  const isNLT = val === 'NLT — Noleggio Lungo Termine';
-  ['c-nbo-grp','c-data-bo-grp'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.style.display = isNLT ? '' : 'none';
-  });
-  ['c-nbo-req','c-data-bo-req'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.style.display = isNLT ? '' : 'none';
-  });
-  if(!isNLT){
-    const nbo=document.getElementById('c-nbo');
-    const dbo=document.getElementById('c-data-bo');
-    if(nbo){nbo.value='';nbo.style.borderColor='';nbo.style.boxShadow='';}
-    if(dbo){dbo.value='';dbo.style.borderColor='';dbo.style.boxShadow='';}
-  }
-}
-
-function toggleTipoVeicoloCustom(val){
-  const grp=document.getElementById('c-tipo-veicolo-custom-grp');
-  if(grp){grp.style.display=val==='altro'?'flex':'none';grp.style.flexDirection='column';grp.style.gap='4px';}
-}
-
-function calcolaMargini(){
-  const margine=parseFloat(document.getElementById('c-margine')?.value)||0;
-  const bonus=parseFloat(document.getElementById('c-bonus')?.value)||0;
-  const pezzi=parseInt(document.getElementById('c-pezzi')?.value)||1;
-  const segnalazione=parseFloat(document.getElementById('c-segnalazione')?.value)||0;
-  const altriCosti=parseFloat(document.getElementById('c-altri-costi')?.value)||0;
-  
-  const lordo=(margine*pezzi)+(bonus*pezzi);
-  const provvigioni=-(lordo*0.5);
-  const netto=lordo+segnalazione+altriCosti+provvigioni;  // Lordo + tutti i costi negativi
-  
-  const fmt=v=>v.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
-  
-  const elLordo=document.getElementById('c-calc-lordo');
-  const elProvv=document.getElementById('c-calc-provv');
-  const elNetto=document.getElementById('c-calc-netto');
-  const elProvvInput=document.getElementById('c-provvigioni');
-  
-  if(elLordo)elLordo.textContent='€ '+fmt(lordo);
-  if(elProvv)elProvv.textContent='- € '+fmt(Math.abs(provvigioni));
-  if(elNetto){
-    elNetto.textContent='€ '+fmt(netto);
-    elNetto.style.color=netto>=0?'var(--green)':'var(--red)';
-  }
-  if(elProvvInput)elProvvInput.value=provvigioni.toFixed(2);
-}
-
-function toggleProdottoCustom(val){
-  const grp=document.getElementById('c-prodotto-custom-grp');
-  if(grp){
-    grp.style.display=val==='altro'?'flex':'none';
-    grp.style.flexDirection='column';
-    grp.style.gap='4px';
-    if(val!=='altro'){const s=document.getElementById('c-prodotto-custom');if(s)s.value='';}
-  }
-}
-function togglePartnerAltro(val){
-  const grp=document.getElementById('c-partner-altro-grp');
-  if(grp){
-    grp.style.display=val==='ALTRO'?'block':'none';
-    if(val!=='ALTRO'){const s=document.getElementById('c-partner-altro');if(s)s.value='';}
-  }
-}
-
-
-function toggleSegnalatoreCont(val){
-  const grp=document.getElementById('c-segnalatore-group');
-  if(grp){
-    grp.style.display=val==='LEAD DA SEGNALATORE'?'flex':'none';
-    grp.style.flexDirection='column';
-    grp.style.gap='4px';
-    if(val!=='LEAD DA SEGNALATORE'){const s=document.getElementById('c-segnalatore');if(s)s.value='';}
-  }
-}
-function formatMese(m){
-  if(!m)return'—';
-  const [y,mo]=m.split('-');
-  const nomi=['','Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-  return `${nomi[parseInt(mo)]} ${y}`;
-}
-
-async function aggiornaFiltroContratti(){
-  const filtroMese=document.getElementById('filtro-mese')?.value||'';
-  const filtroVend=document.getElementById('filtro-venditore')?.value||'';
-  let contratti=[];
+async function modificaTrattativa(id){
   try{
-    let q=sb.from('contratti_chiusi').select('*').order('created_at',{ascending:false});
-    if(filtroMese)q=q.eq('mese',filtroMese);
-    if(filtroVend)q=q.eq('venditore_id',parseInt(filtroVend));
-    const r=await q;contratti=r.data||[];
-  }catch(e){}
-  // Aggiorna la vista mantenendo i filtri
-  renderSec('contratti');
-  // Popola select venditori per Direzione/CFO
-  if(isDir()){
-    setTimeout(async()=>{
-      const sel=document.getElementById('filtro-venditore');
-      if(!sel)return;
-      // Rimuovi opzioni esistenti tranne "Tutti"
-      while(sel.options.length>1)sel.remove(1);
-      try{
-        const{data}=await sb.from('crm_utenti').select('id,nome').eq('attivo',true).order('nome');
-        if(data)data.forEach(u=>{
-          if(u.ruolo==='venditore'){
-            const o=document.createElement('option');
-            o.value=u.id;o.textContent=u.nome;
-            sel.appendChild(o);
-          }
-        });
-      }catch(e){}
-    },200);
-  }
-}
-
-async function filtraContratti(){
-  // Non ricaricare tutto, applica solo il filtro visivo
-  const filtroMese = document.getElementById('filtro-mese')?.value || '';
-  const filtroVend = document.getElementById('filtro-venditore')?.value || '';
-  
-  let contratti = [];
-  try{
-    let q = sb.from('contratti_chiusi').select('*').order('created_at',{ascending:false});
-    if(!isDir()) q = q.eq('venditore_id', CU.id);
-    if(filtroMese) q = q.eq('mese', filtroMese);
-    if(filtroVend) q = q.eq('venditore_id', parseInt(filtroVend));
-    const r = await q;
-    contratti = r.data || [];
-  }catch(e){}
-  renderSec('contratti');
-}
-
-async function modificaContratto(id){
-  try{
-    const{data,error}=await sb.from('contratti_chiusi').select('*').eq('id',id).single();
-    if(error||!data){showToast('Errore caricamento contratto');return;}
-    // Popola il modal con i dati esistenti
-    openModal('modal-contratto');
+    const{data,error}=await sb.from('trattative').select('*').eq('id',id).single();
+    if(error||!data){showToast('Errore caricamento trattativa');return;}
+    openModal('modal-trattativa');
     setTimeout(()=>{
-      document.getElementById('c-mese').value=data.mese||'';
-      document.getElementById('c-cliente').value=data.cliente||'';
-      document.getElementById('c-citta').value=data.citta||'';
-      document.getElementById('c-pezzi').value=data.pezzi||1;
-      document.getElementById('c-margine').value=data.margine||'';
-      document.getElementById('c-bonus').value=data.bonus||'';
-      document.getElementById('c-segnalazione').value=data.margine_segnalazione||'';
-      document.getElementById('c-segnalatore').value=data.segnalatore||'';
-      document.getElementById('c-note').value=data.note||'';
-      // Prodotto
-      const prodEl=document.getElementById('c-prodotto-tipo');
-      const prodotti=['NLT — Noleggio Lungo Termine','Leasing','Acquisto diretto','Noleggio Breve Termine','Fleet Management'];
-      if(prodotti.includes(data.prodotto)){prodEl.value=data.prodotto;}
-      else if(data.prodotto){prodEl.value='altro';toggleProdottoCustom('altro');document.getElementById('c-prodotto-custom').value=data.prodotto;}
-      // Veicolo
-      document.getElementById('c-veicolo').value=data.veicolo||'';
-      // Provenienza
-      document.getElementById('c-provenienza').value=data.provenienza||'';
-      toggleSegnalatoreCont(data.provenienza||'');
-      // Partner
-      const partnerEl=document.getElementById('c-partner');
-      const partners=['VRENT SPA','FORD TRUCKS ITALIA','TIP','HORIZON AUTOMOTIVE — ARVAL','HORIZON AUTOMOTIVE — AYVENS','HORIZON AUTOMOTIVE — VOLKSWAGEN LEASING SCARABEL','HORIZON AUTOMOTIVE — DRIVALIA','HORIZON AUTOMOTIVE — LEASYS','HORIZON AUTOMOTIVE — ALPHABET','HORIZON AUTOMOTIVE — RENT2GO','DRIVALIA DIRETTO BY PETRAROLO','SANTANDER RENTING DIRETTO BY PETRAROLO','ITALRENT DIRETTO BY PETRAROLO','ROLFO ICE','GERVASI INDUSTRIAL'];
-      if(partners.includes(data.partner)){partnerEl.value=data.partner;}
-      else if(data.partner&&data.partner.startsWith('ALTRO')){partnerEl.value='ALTRO';togglePartnerAltro('ALTRO');document.getElementById('c-partner-altro').value=data.partner.replace('ALTRO — ','');}
-      // Salva ID per aggiornamento
-      document.getElementById('save-contratto-btn').dataset.editId=id;
-      document.getElementById('save-contratto-btn').innerHTML='<i class="ti ti-check"></i> Aggiorna contratto';
+      document.getElementById('tr-cliente').value=data.cliente_nome||'';
+      document.getElementById('tr-citta').value=data.citta||'';
+      document.getElementById('tr-tel').value=data.tel||'';
+      document.getElementById('tr-email').value=data.email||'';
+      document.getElementById('tr-tipo').value=data.tipo||'Azienda';
+      document.getElementById('tr-prodotto').value=data.prodotto||'';
+      document.getElementById('tr-veicolo').value=data.veicolo||'';
+      document.getElementById('tr-tipo-veicolo').value=data.tipo_veicolo||'';
+      document.getElementById('tr-valore').value=data.valore_stimato||'';
+      document.getElementById('tr-probabilita').value=data.probabilita||'';
+      document.getElementById('tr-fase').value=data.fase||'In lavorazione';
+      document.getElementById('tr-data-chiusura').value=data.data_chiusura_prevista||'';
+      document.getElementById('tr-note').value=data.note||'';
+      document.getElementById('save-trattativa-btn').dataset.editId=id;
+      document.getElementById('save-trattativa-btn').innerHTML='<i class="ti ti-check"></i> Aggiorna trattativa';
     },100);
   }catch(e){showToast('Errore: '+e.message);}
 }
 
-async function esportaExcel(){
-  // Carica contratti dal DB
-  let contratti=[];
-  try{
-    let q=sb.from('contratti_chiusi').select('*').order('mese',{ascending:false});
-    if(!isDir())q=q.eq('venditore_id',CU.id);
-    // Filtro mese se selezionato
-    const filtroMese=document.getElementById('filtro-mese');
-    if(filtroMese&&filtroMese.value)q=q.eq('mese',filtroMese.value);
-    const{data}=await q;
-    contratti=data||[];
-  }catch(e){showToast('Errore caricamento dati');return;}
-
-  if(!contratti.length){showToast('Nessun contratto da esportare');return;}
-
-  // Crea CSV
-  const headers=['Mese','Data contratto firmato','N° BO','Data BO','Consulente','Partner di fatturazione','Società di noleggio','Nominativo Cliente','Città','Provenienza','Prodotto','Durata noleggio in mesi','Data inizio noleggio','Data fine noleggio','Marca e modello Veicolo','Tipo Veicolo','Pezzi','Margine Unitario (€)','Bonus (€)','Margine Totale Lordo (€)','Nominativo Segnalatore','Costo Segnalazione (€)','Altri costi','Provvigioni consulente','Margine netto','Collega in tandem','Note'];
-  const rows=contratti.map(c=>[
-    c.mese||'',
-    c.data_firma||'',
-    c.nbo||'',
-    c.data_bo||'',
-    c.venditore_nome||'',  // Consulente
-    c.partner||'',
-    c.societa_noleggio||'',
-    c.cliente||'',
-    c.citta||'',
-    c.provenienza||'',
-    c.prodotto||'',
-    c.durata_noleggio||'',
-    c.data_inizio||'',
-    c.data_fine||'',
-    c.veicolo||'',
-    c.tipo_veicolo||'',
-    c.pezzi||1,
-    (parseFloat(c.margine)||0).toFixed(2),
-    (parseFloat(c.bonus)||0).toFixed(2),
-    (parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))).toFixed(2),
-    c.segnalatore||'',
-    c.margine_segnalazione?(parseFloat(c.margine_segnalazione)||0).toFixed(2):'0.00',
-    c.altri_costi?(parseFloat(c.altri_costi)||0).toFixed(2):'0.00',
-    c.provvigioni?(parseFloat(c.provvigioni)||0).toFixed(2):'0.00',
-    (parseFloat(c.margine_netto)||0).toFixed(2),
-    c.collega||'',
-    c.note||''
-  ]);
-
-  // Aggiungi riga totali
-  const totMargine=contratti.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
-  const totMargTot=contratti.reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))),0);
-  const totPezzi=contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
-  const totBonus=contratti.reduce((s,c)=>s+(parseFloat(c.bonus)||0),0);
-  const totSegn=contratti.reduce((s,c)=>s+(parseFloat(c.margine_segnalazione)||0),0);
-  rows.push(['','','','','','TOTALE',totPezzi,totMargine.toFixed(2),totMargTot.toFixed(2),totBonus.toFixed(2),totSegn.toFixed(2),'','','','','']);
-
-  // Genera CSV
-  const csvContent=[headers,...rows].map(function(r){return r.map(function(v){var s=String(v);return '"'+s.replace(/"/g,'""')+'"';}).join(';');}).join('\n');
-  const BOM='﻿'; // BOM per Excel italiano
-  const blob=new Blob([BOM+csvContent],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  const mese=document.getElementById('filtro-mese')?.value||'completo';
-  a.download=`Report_Contratti_${isDir()?'Tutti':CU.nome.replace(/ /g,'_')}_${mese}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('Report Excel esportato!');
-}
-
-async function eliminaPdf(contratoId, pdfIndex){
-  if(!confirm('Eliminare questo PDF?'))return;
-  try{
-    const{data,error}=await sb.from('contratti_chiusi').select('pdf_urls').eq('id',contratoId).single();
-    if(error||!data){showToast('Errore caricamento contratto');return;}
-    let pdfs=[];
-    try{pdfs=JSON.parse(data.pdf_urls||'[]');}catch(e){}
-    if(pdfIndex>=0&&pdfIndex<pdfs.length){
-      // Elimina file da Storage
-      const url=pdfs[pdfIndex].url;
-      const fname=url.split('/contratti-pdf/')[1];
-      if(fname){
-        const sbUrl=localStorage.getItem('p_url');
-        const sbKey=localStorage.getItem('p_key');
-        await fetch(`${sbUrl}/storage/v1/object/contratti-pdf/${fname}`,{
-          method:'DELETE',
-          headers:{'Authorization':`Bearer ${sbKey}`,'apikey':sbKey}
-        });
-      }
-      pdfs.splice(pdfIndex,1);
-      const{error:upErr}=await sb.from('contratti_chiusi').update({pdf_urls:pdfs.length>0?JSON.stringify(pdfs):null}).eq('id',contratoId);
-      if(upErr)throw upErr;
-      showToast('PDF eliminato!');
-      renderSec('contratti');
-    }
-  }catch(e){showToast('Errore: '+e.message);}
-}
-
-async function eliminaContratto(id){
-  if(!confirm('Eliminare questo contratto?'))return;
-  try{
-    await sb.from('contratti_chiusi').delete().eq('id',id);
-    showToast('Contratto eliminato');
-    renderSec('contratti');
-  }catch(e){showToast('Errore: '+e.message);}
-}
-
-function stampaMese(mese){
-  window.print();
-}
-
-function esportaReport(){
-  // Crea CSV dei contratti
-  const rows=[['Mese','Cliente','Partner','Venditore','Collega','Margine','Bonus','Margine Segnalazione','Segnalatore']];
-  // I dati vengono da un re-fetch — per ora apriamo finestra di stampa
-  window.print();
-}
-
-async function salvaContratto(){
-  const btn=document.getElementById('save-contratto-btn');
+async function salvaTrattativa(){
+  const btn=document.getElementById('save-trattativa-btn');
   btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
-  const err=document.getElementById('contratto-err');
-  err.style.display='none';
-
-  const cliente=document.getElementById('c-cliente').value.trim();
-  const mese=document.getElementById('c-mese').value;
-  const margine=document.getElementById('c-margine').value;
-  const pezzi=document.getElementById('c-pezzi').value;
-  const dataFirma=document.getElementById('c-data-firma')?.value||'';
-  const nbo=document.getElementById('c-nbo')?.value.trim()||'';
-  const dataBo=document.getElementById('c-data-bo')?.value||'';
-  const citta=document.getElementById('c-citta')?.value.trim()||'';
-  const provenienza=document.getElementById('c-provenienza')?.value||'';
-  const prodotto_tipo=document.getElementById('c-prodotto-tipo')?.value||'';
-  const partner=document.getElementById('c-partner')?.value||'';
-  const societaNoleggio=document.getElementById('c-societa-noleggio')?.value||'';
-  const tipoVeicolo=document.getElementById('c-tipo-veicolo')?.value||'';
-  const durata=document.getElementById('c-durata')?.value||'';
-  const dataInizio=document.getElementById('c-data-inizio')?.value||'';
-  const dataFine=document.getElementById('c-data-fine')?.value||'';
-  
-  // Validazione campi obbligatori
-  const missing=[];
-  if(!mese)missing.push('Mese');
-  if(!dataFirma)missing.push('Data contratto firmato');
-  if(prodotto_tipo==='NLT — Noleggio Lungo Termine'){
-    if(!nbo)missing.push('N° BO');
-    if(!dataBo)missing.push('Data BO');
-  }
-  // Se Horizon, verifica società selezionata
-  if(partner==='HORIZON AUTOMOTIVE'){
-    const hSoc=document.getElementById('c-horizon-societa')?.value||'';
-    if(!hSoc)missing.push('Società Horizon');
-  }
-  if(!cliente)missing.push('Cliente');
-  // Città opzionale
-  if(!provenienza)missing.push('Provenienza');
-  if(!prodotto_tipo)missing.push('Tipo prodotto');
-  if(!partner)missing.push('Partner di fatturazione');
-  if(!societaNoleggio)missing.push('Società di noleggio');
-  if(!tipoVeicolo)missing.push('Tipo veicolo');
-  if(prodotto_tipo !== 'Acquisto diretto'){
-    if(!durata)missing.push('Durata noleggio');
-    if(!dataInizio)missing.push('Data inizio');
-    if(!dataFine)missing.push('Data fine');
-  }
-  if(!document.getElementById('c-veicolo')?.value.trim())missing.push('Veicolo');
-  if(!pezzi)missing.push('N° pezzi');
-  if(!margine)missing.push('Margine unitario');
-  // Evidenzia campi mancanti in rosso
-  const isAcquistoDir = prodotto_tipo === 'Acquisto diretto';
-  const fieldMap={
-    'Mese':'c-mese','Data contratto firmato':'c-data-firma','N° BO':'c-nbo',
-    'Data BO':'c-data-bo','Cliente':'c-cliente','Città':'c-citta',
-    'Provenienza':'c-provenienza','Tipo prodotto':'c-prodotto-tipo',
-    'Partner di fatturazione':'c-partner','Società Horizon':'c-horizon-societa','Società di noleggio':'c-societa-noleggio',
-    'Tipo veicolo':'c-tipo-veicolo',
-    ...(isAcquistoDir ? {} : {'Durata noleggio':'c-durata','Data inizio':'c-data-inizio','Data fine':'c-data-fine'}),
-    'Veicolo':'c-veicolo','N° pezzi':'c-pezzi','Margine unitario':'c-margine'
-  };
-  // Reset tutti i campi
-  Object.values(fieldMap).forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){el.style.borderColor='';el.style.boxShadow='';}
-  });
-  // Evidenzia quelli mancanti
-  missing.forEach(name=>{
-    const id=fieldMap[name];
-    if(id){
-      const el=document.getElementById(id);
-      if(el){
-        el.style.borderColor='#E53935';
-        el.style.boxShadow='0 0 0 3px rgba(229,57,53,.2)';
-        el.scrollIntoView({behavior:'smooth',block:'center'});
-      }
-    }
-  });
-  if(missing.length>0){
-    showErr(err,'⚠️ Compila i campi evidenziati in rosso: '+missing.join(', '));
-    btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;
-  }
-  const fonteVal=document.getElementById('c-provenienza').value;
-  if(fonteVal==='LEAD DA SEGNALATORE'&&!document.getElementById('c-segnalatore').value.trim()){
-    showErr(err,'Inserisci il nome del segnalatore.');
-    btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;
-  }
-
-  // Upload PDF multipli su Supabase Storage
-  const pdfFiles=Array.from(document.getElementById('c-pdf').files);
-  let pdfUrls=[];
-  for(const pdfFile of pdfFiles){
-    if(pdfFile.size>20*1024*1024){
-      showErr(err,`${pdfFile.name} supera 20MB.`);
-      btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;
-    }
-    try{
-      const fname=`${Date.now()}_${Math.random().toString(36).slice(2)}_${pdfFile.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
-      const sbUrl=localStorage.getItem('p_url');
-      const sbKey=localStorage.getItem('p_key');
-      const uploadRes=await fetch(`${sbUrl}/storage/v1/object/contratti-pdf/${fname}`,{
-        method:'POST',
-        headers:{
-          'Authorization':`Bearer ${sbKey}`,
-          'apikey':sbKey,
-          'Content-Type':pdfFile.type||'application/octet-stream',
-          'x-upsert':'true'
-        },
-        body:pdfFile
-      });
-      if(!uploadRes.ok){const e=await uploadRes.json().catch(()=>({}));throw new Error(e.message||'Upload fallito');}
-      pdfUrls.push({nome:pdfFile.name,url:`${sbUrl}/storage/v1/object/public/contratti-pdf/${fname}`});
-    }catch(e){
-      showErr(err,'Errore upload PDF: '+e.message);
-      btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;
-    }
-  }
-
-  // Prodotto
-  let prodotto=document.getElementById('c-prodotto-tipo').value;
-  if(prodotto==='altro')prodotto=document.getElementById('c-prodotto-custom').value.trim();
-
-  // Partner
-  // Partner già dichiarato sopra - rileggi il valore
-  partner=document.getElementById('c-partner')?.value||partner;
-  if(partner==='ALTRO'){
-    const alt=(document.getElementById('c-partner-altro').value||'').trim();
-    partner=alt?`ALTRO — ${alt}`:'ALTRO';
-  }
-
-  // Provenienza con segnalatore
-  provenienza=document.getElementById('c-provenienza').value;
-
-  const editId=document.getElementById('save-contratto-btn').dataset.editId;
-
-  // Calcola margini
-  const margineNum=parseFloat(margine)||0;
-  const bonusNum=parseFloat(document.getElementById('c-bonus')?.value)||0;
-  const pezziNum=parseInt(pezzi)||1;
-  const segnalazioneNum=parseFloat(document.getElementById('c-segnalazione')?.value)||0;
-  const altriCostiNum=parseFloat(document.getElementById('c-altri-costi')?.value)||0;
-  const lordo=(margineNum*pezziNum)+(bonusNum*pezziNum);
-  const provvigioniNum=-(lordo*0.5);
-  const netto=lordo+segnalazioneNum+altriCostiNum+provvigioniNum;  // Lordo - tutti i costi
-  
-  // Tipo veicolo
-  let tipoVeicoloFinal=tipoVeicolo;
-  if(tipoVeicolo==='altro')tipoVeicoloFinal=document.getElementById('c-tipo-veicolo-custom')?.value.trim()||'';
-  
+  const cliente=document.getElementById('tr-cliente')?.value.trim();
+  if(!cliente){showToast('Inserisci il nome del cliente');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva trattativa';return;}
   const payload={
-    mese,cliente,
-    data_firma:dataFirma||null,
-    nbo:nbo||null,
-    data_bo:dataBo||null,
-    citta:citta||null,
-    prodotto:prodotto||null,
-    veicolo:document.getElementById('c-veicolo')?.value.trim()||null,
-    tipo_veicolo:tipoVeicoloFinal||null,
-    durata_noleggio:parseInt(durata)||null,
-    data_inizio:dataInizio||null,
-    data_fine:dataFine||null,
-    partner:(()=>{
-      if(partner==='HORIZON AUTOMOTIVE'){
-        const soc=document.getElementById('c-horizon-societa')?.value||'';
-        return soc?'HORIZON AUTOMOTIVE — '+soc:'HORIZON AUTOMOTIVE';
-      }
-      return partner||null;
-    })(),
-    societa_noleggio:societaNoleggio||null,
-    provenienza:provenienza||null,
+    cliente_nome:cliente,
+    citta:document.getElementById('tr-citta')?.value.trim()||null,
+    tel:document.getElementById('tr-tel')?.value.trim()||null,
+    email:document.getElementById('tr-email')?.value.trim()||null,
+    tipo:document.getElementById('tr-tipo')?.value||'Azienda',
+    prodotto:document.getElementById('tr-prodotto')?.value.trim()||null,
+    veicolo:document.getElementById('tr-veicolo')?.value.trim()||null,
+    tipo_veicolo:document.getElementById('tr-tipo-veicolo')?.value||null,
+    valore_stimato:parseFloat(document.getElementById('tr-valore')?.value)||null,
+    probabilita:parseInt(document.getElementById('tr-probabilita')?.value)||null,
+    fase:document.getElementById('tr-fase-input')?.value||'In lavorazione',
+    data_chiusura_prevista:document.getElementById('tr-data-chiusura')?.value||null,
+    note:document.getElementById('tr-note')?.value.trim()||null,
     venditore_id:CU.id,
     venditore_nome:CU.nome,
-    collega:document.getElementById('c-collega')?.value||null,
-    pezzi:pezziNum,
-    margine:margineNum,
-    bonus:bonusNum||null,
-    margine_totale_lordo:lordo,
-    margine_segnalazione:segnalazioneNum||null,
-    altri_costi:altriCostiNum||null,
-    provvigioni:provvigioniNum,
-    margine_netto:netto,
-    segnalatore:document.getElementById('c-segnalatore')?.value.trim()||null,
-    note:document.getElementById('c-note')?.value.trim()||null,
-    created_by:CU.nome
+    stato:'Aperta'
   };
-
-  // Aggiungi PDF solo se caricati nuovi
-  if(pdfUrls.length>0)payload.pdf_urls=JSON.stringify(pdfUrls);
-
   try{
-    let saveError;
+    const editId=document.getElementById('save-trattativa-btn').dataset.editId;
     if(editId){
-      const{error}=await sb.from('contratti_chiusi').update(payload).eq('id',parseInt(editId));
-      saveError=error;
-      delete document.getElementById('save-contratto-btn').dataset.editId;
-    }else{
-      const{error}=await sb.from('contratti_chiusi').insert(payload);
-      saveError=error;
+      const{error}=await sb.from('trattative').update(payload).eq('id',parseInt(editId));
+      if(error)throw error;
+      delete document.getElementById('save-trattativa-btn').dataset.editId;
+      showToast('Trattativa aggiornata!');
+    } else {
+      const{error}=await sb.from('trattative').insert(payload);
+      if(error)throw error;
+      showToast('Trattativa salvata!');
     }
-    if(saveError)throw saveError;
-
-    closeModal('modal-contratto');
-    // Auto-crea o aggiorna cliente nell'anagrafica
-    if(!editId){
-      try{
-        const clienteNome=payload.cliente;
-        // Cerca se esiste già
-        const{data:existing}=await sb.from('clienti').select('id').eq('nome',clienteNome).eq('venditore_id',CU.id).single();
-        if(!existing){
-          // Crea nuovo cliente
-          await sb.from('clienti').insert({
-            nome:clienteNome,
-            citta:payload.citta||null,
-            tipo:'Azienda',
-            stato:'Attivo',
-            fonte:payload.provenienza||'Contratto diretto',
-            interesse:payload.prodotto||null,
-            venditore_id:CU.id,
-            venditore_nome:CU.nome,
-            score:80,
-            created_by:CU.nome
-          });
-        } else {
-          // Aggiorna stato a Attivo se era Lead
-          await sb.from('clienti').update({stato:'Attivo'}).eq('id',existing.id).eq('stato','Lead');
-        }
-      }catch(e){console.log('Auto-cliente:', e.message);}
-    }
-    showToast(editId?'Contratto aggiornato!':'Contratto salvato con successo!');
-    ['c-cliente','c-citta','c-veicolo','c-prodotto-custom','c-partner-altro','c-margine','c-pezzi','c-bonus','c-segnalazione','c-segnalatore','c-note','c-nbo','c-data-firma','c-data-bo','c-durata','c-data-inizio','c-data-fine','c-altri-costi','c-provvigioni'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['c-calc-lordo','c-calc-provv','c-calc-netto'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='€ 0,00';});
-  document.getElementById('c-societa-noleggio') && (document.getElementById('c-societa-noleggio').value='');
-  document.getElementById('c-tipo-veicolo') && (document.getElementById('c-tipo-veicolo').value='');
-    document.getElementById('c-collega').value='';
-    document.getElementById('c-provenienza').value='';
-    document.getElementById('c-prodotto-tipo').value='';
-    document.getElementById('c-partner').value='';
-    document.getElementById('c-pdf').value='';
-    toggleSegnalatoreCont('');
-    toggleProdottoCustom('');
-    togglePartnerAltro('');
-    document.getElementById('save-contratto-btn').innerHTML='<i class="ti ti-check"></i> Salva contratto';
-    renderSec('contratti');
-  }catch(e){
-    showErr(err,'Errore: '+e.message);
-  }
-  btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';
+    closeModal('modal-trattativa');
+    renderSec('trattative');
+  }catch(e){showToast('Errore: '+e.message);}
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva trattativa';
 }
 
+async function apriTimelineTrattativa(id, nome){
+  window._trattativaId=id;
+  window._trattativaNome=nome;
+  openModal('modal-timeline-trattativa');
+  const content=document.getElementById('trt-content');
+  content.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Caricamento...</div>';
+  document.getElementById('trt-title').textContent='Timeline: '+nome;
+  try{
+    const{data}=await sb.from('trattative_attivita').select('*').eq('trattativa_id',id).order('created_at',{ascending:false});
+    const attivita=data||[];
+    const iconMap={'Chiamata telefonica':'ti-phone','Visita cliente':'ti-building','Email inviata':'ti-mail','Preventivo inviato':'ti-file-invoice','Appuntamento fissato':'ti-calendar','Nota interna':'ti-notes'};
+    content.innerHTML=attivita.length?attivita.map(a=>`
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--navy-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="ti ${iconMap[a.tipo]||'ti-notes'}" style="font-size:14px;color:var(--navy)"></i>
+        </div>
+        <div style="flex:1;background:var(--gray);border-radius:9px;padding:10px 13px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:4px">
+            <span style="font-size:12.5px;font-weight:700">${a.tipo}</span>
+            <span style="font-size:10.5px;color:var(--text3)">${new Date(a.created_at).toLocaleString('it-IT')} · ${a.venditore_nome||'—'}</span>
+          </div>
+          ${a.descrizione?`<div style="font-size:12px;color:var(--text)">${a.descrizione}</div>`:''}
+          ${a.risposta_cliente?`<div style="margin-top:6px;background:#fff;border-radius:6px;padding:7px 10px;border-left:3px solid var(--orange);font-size:12px;color:var(--text2)"><strong>Risposta:</strong> ${a.risposta_cliente}</div>`:''}
+        </div>
+      </div>`).join(''):'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna attività registrata</div>';
+  }catch(e){content.innerHTML='<div style="padding:20px;text-align:center;color:var(--red)">Errore caricamento</div>';}
+}
 
-// Browser back button support
-window.addEventListener('popstate', function(e){
-  if(e.state&&e.state.sec){
-    navTo(e.state.sec);
-  }
-});
+async function salvaTlTrattativa(){
+  const tipo=document.getElementById('trt-tipo')?.value;
+  const desc=document.getElementById('trt-desc')?.value.trim();
+  if(!tipo||!desc){showToast('Compila tipo e descrizione');return;}
+  const btn=document.getElementById('trt-save-btn');
+  btn.disabled=true;
+  try{
+    await sb.from('trattative_attivita').insert({trattativa_id:window._trattativaId,tipo,descrizione:desc,risposta_cliente:document.getElementById('trt-risposta')?.value.trim()||null,venditore_id:CU.id,venditore_nome:CU.nome});
+    document.getElementById('trt-tipo').value='';
+    document.getElementById('trt-desc').value='';
+    document.getElementById('trt-risposta').value='';
+    showToast('Attività salvata!');
+    apriTimelineTrattativa(window._trattativaId,window._trattativaNome);
+  }catch(e){showToast('Errore: '+e.message);}
+  btn.disabled=false;
+}
 
-// ═══ AUTO-INIT SUPABASE ═══
-(function(){
-  const SB_URL='https://pptzcldqqznyhevkqiob.supabase.co';
-  const SB_KEY='sb_publishable_MLh4USvttp52Dsk8L3n2KQ_dvr_Z7AN';
-  localStorage.setItem('p_url',SB_URL);
-  localStorage.setItem('p_key',SB_KEY);
-  window.addEventListener('DOMContentLoaded',function(){initSB(SB_URL,SB_KEY);});
-})();
-</script>
-
-<!-- BOTTOM NAV MOBILE -->
-<div id="bottom-nav">
-  <button class="bnav-item active" onclick="navTo('dashboard')" id="bnav-dashboard">
-    <i class="ti ti-layout-dashboard"></i><span>Home</span>
-  </button>
-  <button class="bnav-item" onclick="navTo('clienti')" id="bnav-clienti">
-    <i class="ti ti-users"></i><span>Clienti</span>
-  </button>
-  <button class="bnav-item" onclick="navTo('contratti')" id="bnav-contratti">
-    <i class="ti ti-file-invoice"></i><span>Contratti</span>
-  </button>
-  <button class="bnav-item" onclick="navTo('report-lead')" id="bnav-lead">
-    <i class="ti ti-chart-pie"></i><span>Lead</span>
-  </button>
-  <button class="bnav-item" onclick="toggleMobileMenu()" id="bnav-altro">
-    <i class="ti ti-dots"></i><span>Altro</span>
-  </button>
-</div>
-<!-- FAB - Nuovo Lead -->
-<button id="fab-btn" onclick="openModal('modal-lead');if(canAssign()){document.getElementById('f-assegna-grp').style.display='block';setTimeout(popolaVenditoriAssegna,100);}" title="Nuova Lead">
-  <i class="ti ti-plus"></i>
-</button>
-</body>
-</html>
+>
