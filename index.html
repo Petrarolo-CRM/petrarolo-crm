@@ -2165,16 +2165,16 @@ async function rReport(){
         const d=byMese[m];
         const perc=Math.round(d.margine/maxMargine*100);
         const data=new Date(m+'-01').toLocaleString('it-IT',{month:'long',year:'numeric'});
-        return\`<div style="margin-bottom:16px">
+        return`<div style="margin-bottom:16px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <div><span style="font-size:13px;font-weight:700;text-transform:capitalize">\${data}</span>
-            <span style="font-size:11px;color:var(--text3);margin-left:8px">\${d.pezzi} pezzi · \${d.contratti} contratti</span></div>
-            <span style="font-size:14px;font-weight:700;color:var(--orange)">€ \${d.margine.toLocaleString('it-IT')}</span>
+            <div><span style="font-size:13px;font-weight:700;text-transform:capitalize">${data}</span>
+            <span style="font-size:11px;color:var(--text3);margin-left:8px">${d.pezzi} pezzi · ${d.contratti} contratti</span></div>
+            <span style="font-size:14px;font-weight:700;color:var(--orange)">€ ${d.margine.toLocaleString('it-IT')}</span>
           </div>
           <div style="height:10px;background:var(--gray2);border-radius:5px;overflow:hidden">
-            <div style="height:100%;width:\${perc}%;background:linear-gradient(90deg,#1E2D3D,#E8530A);border-radius:5px"></div>
+            <div style="height:100%;width:${perc}%;background:linear-gradient(90deg,#1E2D3D,#E8530A);border-radius:5px"></div>
           </div>
-        </div>\`;
+        </div>`;
       }).join('')}
     </div>
   </div>`;
@@ -2245,7 +2245,7 @@ function formatMese(m){
   if(!m)return'—';
   const[y,mo]=m.split('-');
   const nomi=['','Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-  return\`\${nomi[parseInt(mo)]} \${y}\`;
+  return`${nomi[parseInt(mo)]} ${y}`;
 }
 
 async function rContratti(){
@@ -2267,36 +2267,36 @@ async function rContratti(){
   });
   const mesiOrdinati=Object.keys(mesi).sort().reverse();
   const mesiDisp=[...new Set(contratti.map(c=>c.mese))].sort().reverse();
-  document.getElementById('content').innerHTML=\`
+  document.getElementById('content').innerHTML=`
   <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Contratti mese corrente</div><div class="kpi-v">\${thisMonth.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0)}</div><div class="kpi-d" style="color:var(--text3)">Pezzi</div></div>
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Margine mese corrente</div><div class="kpi-v">€ \${totMargine.toLocaleString('it-IT',{minimumFractionDigits:0})}</div><div class="kpi-d" style="color:var(--text3)">Totale</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Contratti totali</div><div class="kpi-v">\${contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0)}</div><div class="kpi-d" style="color:var(--text3)">Storico</div></div>
-    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Margine totale</div><div class="kpi-v">€ \${contratti.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0).toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">Storico</div></div>
+    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Contratti mese corrente</div><div class="kpi-v">${thisMonth.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0)}</div><div class="kpi-d" style="color:var(--text3)">Pezzi</div></div>
+    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Margine mese corrente</div><div class="kpi-v">€ ${totMargine.toLocaleString('it-IT',{minimumFractionDigits:0})}</div><div class="kpi-d" style="color:var(--text3)">Totale</div></div>
+    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Contratti totali</div><div class="kpi-v">${contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0)}</div><div class="kpi-d" style="color:var(--text3)">Storico</div></div>
+    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Margine totale</div><div class="kpi-v">€ ${contratti.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0).toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">Storico</div></div>
   </div>
   <div class="full-card">
     <div class="card-head">
-      <span class="card-title"><i class="ti ti-file-invoice" style="color:var(--orange);margin-right:6px"></i>Contratti chiusi\${isDir()?' — tutti i consulenti':' — '+CU.nome}</span>
+      <span class="card-title"><i class="ti ti-file-invoice" style="color:var(--orange);margin-right:6px"></i>Contratti chiusi${isDir()?' — tutti i consulenti':' — '+CU.nome}</span>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <select id="filtro-mese" class="btn btn-sm" style="cursor:pointer" onchange="filtraContratti()">
           <option value="">Tutti i mesi</option>
-          \${mesiDisp.map(m=>\`<option value="\${m}">\${formatMese(m)}</option>\`).join('')}
+          ${mesiDisp.map(m=>`<option value="${m}">${formatMese(m)}</option>`).join('')}
         </select>
-        \${isDir()?\`<select id="filtro-venditore" class="btn btn-sm" style="cursor:pointer" onchange="filtraContratti()"><option value="">Tutti i consulenti</option></select>\`:''}
+        ${isDir()?`<select id="filtro-venditore" class="btn btn-sm" style="cursor:pointer" onchange="filtraContratti()"><option value="">Tutti i consulenti</option></select>`:''}
         <button class="btn btn-sm" onclick="esportaExcel()"><i class="ti ti-file-spreadsheet"></i> Scarica Excel</button>
         <button class="btn btn-sm btn-orange" onclick="openModal('modal-contratto')"><i class="ti ti-plus"></i> Nuovo contratto</button>
       </div>
     </div>
-    \${mesiOrdinati.length===0?\`<div style="padding:40px;text-align:center;color:var(--text3)">Nessun contratto. Clicca "+ Nuovo contratto".</div>\`:''}
-    \${mesiOrdinati.map(mese=>{
+    ${mesiOrdinati.length===0?`<div style="padding:40px;text-align:center;color:var(--text3)">Nessun contratto. Clicca "+ Nuovo contratto".</div>`:''}
+    ${mesiOrdinati.map(mese=>{
       const m=mesi[mese];
-      return \`<div style="border-bottom:2px solid var(--border)">
+      return `<div style="border-bottom:2px solid var(--border)">
         <div style="padding:12px 18px;background:var(--gray);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <div style="font-size:13px;font-weight:700;color:var(--navy)">\${formatMese(mese)}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)">${formatMese(mese)}</div>
           <div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">
-            <span><strong>\${m.contratti.length}</strong> contratti</span>
-            <span><strong>\${m.totPezzi}</strong> pezzi</span>
-            <span>Margine: <strong style="color:var(--orange)">€ \${m.totMargine.toLocaleString('it-IT')}</strong></span>
+            <span><strong>${m.contratti.length}</strong> contratti</span>
+            <span><strong>${m.totPezzi}</strong> pezzi</span>
+            <span>Margine: <strong style="color:var(--orange)">€ ${m.totMargine.toLocaleString('it-IT')}</strong></span>
           </div>
         </div>
         <div class="tbl-wrap"><table class="tbl">
@@ -2305,40 +2305,40 @@ async function rContratti(){
             <th>Prodotto</th><th>Veicolo</th><th>Tipo Veicolo</th><th>Pezzi</th>
             <th>Margine Unit.</th><th>Bonus</th><th>Lordo</th><th>Segnalatore</th>
             <th>Segnal.€</th><th>Altri costi</th><th>Provvig.</th><th>Netto</th>
-            \${isDir()?\`<th>Partner</th>\`:''}
+            ${isDir()?`<th>Partner</th>`:''}
             <th>PDF</th><th>Azioni</th>
           </tr></thead>
           <tbody>
-          \${m.contratti.map(c=>\`<tr>
-            <td style="font-size:11px">\${c.data_firma?new Date(c.data_firma).toLocaleDateString('it-IT'):'—'}</td>
-            <td style="font-size:11px">\${c.nbo||'—'}</td>
-            <td style="font-weight:600;font-size:11.5px">\${c.venditore_nome||'—'}</td>
-            <td style="font-weight:600">\${c.cliente||'—'}</td>
-            <td style="color:var(--text2)">\${c.citta||'—'}</td>
-            <td style="font-size:11px">\${c.prodotto||'—'}</td>
-            <td style="color:var(--text2);font-size:11px">\${c.veicolo||'—'}</td>
-            <td style="font-size:11px">\${c.tipo_veicolo||'—'}</td>
-            <td style="text-align:center;font-weight:700">\${c.pezzi||1}</td>
-            <td style="color:var(--orange)">€ \${(parseFloat(c.margine)||0).toLocaleString('it-IT')}</td>
-            <td>\${c.bonus?\`€ \${parseFloat(c.bonus).toLocaleString('it-IT')}\`:'—'}</td>
-            <td style="font-weight:700;color:var(--navy)">€ \${(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))).toLocaleString('it-IT')}</td>
-            <td style="font-size:11px">\${c.segnalatore||'—'}</td>
-            <td style="color:var(--red)">\${c.margine_segnalazione?\`€ \${parseFloat(c.margine_segnalazione).toLocaleString('it-IT')}\`:'—'}</td>
-            <td style="color:var(--red)">\${c.altri_costi?\`€ \${parseFloat(c.altri_costi).toLocaleString('it-IT')}\`:'—'}</td>
-            <td style="color:var(--red)">\${c.provvigioni?\`€ \${parseFloat(c.provvigioni).toLocaleString('it-IT')}\`:'—'}</td>
-            <td style="font-weight:700;color:\${(parseFloat(c.margine_netto)||0)>=0?'var(--green)':'var(--red)'}">€ \${(parseFloat(c.margine_netto)||0).toLocaleString('it-IT')}</td>
-            \${isDir()?\`<td style="font-size:11px">\${c.partner||'—'}</td>\`:''}
-            <td>\${(()=>{try{const pdfs=c.pdf_urls?JSON.parse(c.pdf_urls):c.pdf_url?[{nome:'PDF',url:c.pdf_url}]:[];if(!pdfs.length)return'—';return pdfs.map((p,i)=>\`<a href="\${p.url}" target="_blank" class="btn btn-sm" style="padding:2px 6px;font-size:10px"><i class="ti ti-file-type-pdf"></i></a>\`).join('');}catch(e){return c.pdf_url?\`<a href="\${c.pdf_url}" target="_blank" class="btn btn-sm" style="padding:2px 6px;font-size:10px"><i class="ti ti-file-type-pdf"></i></a>\`:'—';}})()}</td>
+          ${m.contratti.map(c=>`<tr>
+            <td style="font-size:11px">${c.data_firma?new Date(c.data_firma).toLocaleDateString('it-IT'):'—'}</td>
+            <td style="font-size:11px">${c.nbo||'—'}</td>
+            <td style="font-weight:600;font-size:11.5px">${c.venditore_nome||'—'}</td>
+            <td style="font-weight:600">${c.cliente||'—'}</td>
+            <td style="color:var(--text2)">${c.citta||'—'}</td>
+            <td style="font-size:11px">${c.prodotto||'—'}</td>
+            <td style="color:var(--text2);font-size:11px">${c.veicolo||'—'}</td>
+            <td style="font-size:11px">${c.tipo_veicolo||'—'}</td>
+            <td style="text-align:center;font-weight:700">${c.pezzi||1}</td>
+            <td style="color:var(--orange)">€ ${(parseFloat(c.margine)||0).toLocaleString('it-IT')}</td>
+            <td>${c.bonus?`€ ${parseFloat(c.bonus).toLocaleString('it-IT')}`:'—'}</td>
+            <td style="font-weight:700;color:var(--navy)">€ ${(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))).toLocaleString('it-IT')}</td>
+            <td style="font-size:11px">${c.segnalatore||'—'}</td>
+            <td style="color:var(--red)">${c.margine_segnalazione?`€ ${parseFloat(c.margine_segnalazione).toLocaleString('it-IT')}`:'—'}</td>
+            <td style="color:var(--red)">${c.altri_costi?`€ ${parseFloat(c.altri_costi).toLocaleString('it-IT')}`:'—'}</td>
+            <td style="color:var(--red)">${c.provvigioni?`€ ${parseFloat(c.provvigioni).toLocaleString('it-IT')}`:'—'}</td>
+            <td style="font-weight:700;color:${(parseFloat(c.margine_netto)||0)>=0?'var(--green)':'var(--red)'}">€ ${(parseFloat(c.margine_netto)||0).toLocaleString('it-IT')}</td>
+            ${isDir()?`<td style="font-size:11px">${c.partner||'—'}</td>`:''}
+            <td>${(()=>{try{const pdfs=c.pdf_urls?JSON.parse(c.pdf_urls):c.pdf_url?[{nome:'PDF',url:c.pdf_url}]:[];if(!pdfs.length)return'—';return pdfs.map((p,i)=>`<a href="${p.url}" target="_blank" class="btn btn-sm" style="padding:2px 6px;font-size:10px"><i class="ti ti-file-type-pdf"></i></a>`).join('');}catch(e){return c.pdf_url?`<a href="${c.pdf_url}" target="_blank" class="btn btn-sm" style="padding:2px 6px;font-size:10px"><i class="ti ti-file-type-pdf"></i></a>`:'—';}})()}</td>
             <td><div style="display:flex;gap:3px">
-              <button class="btn btn-sm" style="padding:3px 7px;font-size:10px" onclick="modificaContratto(\${c.id})"><i class="ti ti-edit"></i></button>
-              <button class="btn btn-sm btn-red" style="padding:3px 7px;font-size:10px" onclick="eliminaContratto(\${c.id})"><i class="ti ti-trash"></i></button>
+              <button class="btn btn-sm" style="padding:3px 7px;font-size:10px" onclick="modificaContratto(${c.id})"><i class="ti ti-edit"></i></button>
+              <button class="btn btn-sm btn-red" style="padding:3px 7px;font-size:10px" onclick="eliminaContratto(${c.id})"><i class="ti ti-trash"></i></button>
             </div></td>
-          </tr>\`).join('')}
+          </tr>`).join('')}
           </tbody>
         </table></div>
-      </div>\`;
+      </div>`;
     }).join('')}
-  </div>\`;
+  </div>`;
   // Popola venditori
   if(isDir())setTimeout(async()=>{
     const sel=document.getElementById('filtro-venditore');if(!sel)return;
@@ -2425,7 +2425,7 @@ async function esportaExcel(){
   const csv='\\uFEFF'+[headers.map(esc).join(sep),...rows.map(r=>r.map(esc).join(sep))].join('\\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download=\`Report_Contratti_\${isDir()?'Team':CU.nome.replace(/ /g,'_')}_\${new Date().toISOString().slice(0,10)}.csv\`;
+  a.href=url;a.download=`Report_Contratti_${isDir()?'Team':CU.nome.replace(/ /g,'_')}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();URL.revokeObjectURL(url);showToast('Excel esportato!');
 }
 
@@ -2489,11 +2489,11 @@ async function salvaContratto(){
   for(const pdfFile of pdfFiles){
     if(pdfFile.size>20*1024*1024){showErr(err,pdfFile.name+' supera 20MB.');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;}
     try{
-      const fname=\`\${Date.now()}_\${Math.random().toString(36).slice(2)}_\${pdfFile.name.replace(/[^a-zA-Z0-9._-]/g,'_')}\`;
+      const fname=`${Date.now()}_${Math.random().toString(36).slice(2)}_${pdfFile.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
       const sbUrl=localStorage.getItem('p_url');const sbKey=localStorage.getItem('p_key');
-      const uploadRes=await fetch(\`\${sbUrl}/storage/v1/object/contratti-pdf/\${fname}\`,{method:'POST',headers:{'Authorization':\`Bearer \${sbKey}\`,'apikey':sbKey,'Content-Type':pdfFile.type||'application/octet-stream','x-upsert':'true'},body:pdfFile});
+      const uploadRes=await fetch(`${sbUrl}/storage/v1/object/contratti-pdf/${fname}`,{method:'POST',headers:{'Authorization':`Bearer ${sbKey}`,'apikey':sbKey,'Content-Type':pdfFile.type||'application/octet-stream','x-upsert':'true'},body:pdfFile});
       if(!uploadRes.ok)throw new Error('Upload fallito');
-      pdfUrls.push({nome:pdfFile.name,url:\`\${sbUrl}/storage/v1/object/public/contratti-pdf/\${fname}\`});
+      pdfUrls.push({nome:pdfFile.name,url:`${sbUrl}/storage/v1/object/public/contratti-pdf/${fname}`});
     }catch(e){showErr(err,'Errore upload PDF: '+e.message);btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;}
   }
   const payload={
@@ -2544,33 +2544,33 @@ async function rFlotta(){
   function fData(d){return d?new Date(d).toLocaleDateString('it-IT'):'—';}
   const scadenze=veicoli.filter(v=>v.data_scadenza&&new Date(v.data_scadenza)<=tra4mesi).sort((a,b)=>new Date(a.data_scadenza)-new Date(b.data_scadenza));
   const urgenti=scadenze.filter(v=>gg(v.data_scadenza)<=30);
-  document.getElementById('content').innerHTML=\`
+  document.getElementById('content').innerHTML=`
   <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--red-bg)"><div class="kpi-l">Urgenti ≤30gg</div><div class="kpi-v" style="color:#991B1B">\${urgenti.length}</div><div class="kpi-d dd">Contattare subito</div></div>
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Scadenze entro 4 mesi</div><div class="kpi-v">\${scadenze.length}</div><div class="kpi-d du">Da pianificare</div></div>
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Veicoli in flotta</div><div class="kpi-v">\${veicoli.length}</div><div class="kpi-d" style="color:var(--text3)">Totale</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Clienti attivi</div><div class="kpi-v">\${clienti.filter(c=>c.stato==='Attivo'||c.stato==='VIP').length}</div><div class="kpi-d du">Database</div></div>
+    <div class="kpi" style="border-top-color:var(--red-bg)"><div class="kpi-l">Urgenti ≤30gg</div><div class="kpi-v" style="color:#991B1B">${urgenti.length}</div><div class="kpi-d dd">Contattare subito</div></div>
+    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Scadenze entro 4 mesi</div><div class="kpi-v">${scadenze.length}</div><div class="kpi-d du">Da pianificare</div></div>
+    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Veicoli in flotta</div><div class="kpi-v">${veicoli.length}</div><div class="kpi-d" style="color:var(--text3)">Totale</div></div>
+    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Clienti attivi</div><div class="kpi-v">${clienti.filter(c=>c.stato==='Attivo'||c.stato==='VIP').length}</div><div class="kpi-d du">Database</div></div>
   </div>
-  \${urgenti.length>0?\`<div style="background:var(--red-bg);border:1px solid #F09595;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px"><i class="ti ti-alert-triangle" style="font-size:20px;color:#991B1B;flex-shrink:0"></i><div style="font-size:13px;font-weight:600;color:#991B1B">\${urgenti.length} contratt\${urgenti.length===1?'o':'i'} in scadenza entro 30 giorni — contatta subito</div></div>\`:''}
+  ${urgenti.length>0?`<div style="background:var(--red-bg);border:1px solid #F09595;border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px"><i class="ti ti-alert-triangle" style="font-size:20px;color:#991B1B;flex-shrink:0"></i><div style="font-size:13px;font-weight:600;color:#991B1B">${urgenti.length} contratt${urgenti.length===1?'o':'i'} in scadenza entro 30 giorni — contatta subito</div></div>`:''}
   <div class="full-card">
     <div class="card-head">
       <span class="card-title"><i class="ti ti-calendar-event" style="color:var(--orange);margin-right:6px"></i>Scadenze — prossimi 4 mesi</span>
       <button class="btn btn-sm btn-orange" onclick="openModal('modal-veicolo')"><i class="ti ti-plus"></i> Aggiungi veicolo</button>
     </div>
-    \${scadenze.length===0?\`<div style="padding:40px;text-align:center;color:var(--text3)">Nessuna scadenza nei prossimi 4 mesi.</div>\`:''}
+    ${scadenze.length===0?`<div style="padding:40px;text-align:center;color:var(--text3)">Nessuna scadenza nei prossimi 4 mesi.</div>`:''}
     <div class="tbl-wrap"><table class="tbl"><thead><tr>
-      <th>Cliente</th><th>Modello</th><th>Targa</th><th>Categoria</th><th>Contratto</th><th>Scadenza</th><th>Giorni</th>\${isDir()?'<th>Consulente</th>':''}
+      <th>Cliente</th><th>Modello</th><th>Targa</th><th>Categoria</th><th>Contratto</th><th>Scadenza</th><th>Giorni</th>${isDir()?'<th>Consulente</th>':''}
     </tr></thead><tbody>
-    \${scadenze.map(v=>\`<tr>
-      <td style="font-weight:600">\${v.cliente_nome||'—'}</td>
-      <td>\${v.modello||'—'}</td>
-      <td><span style="font-family:monospace;font-size:11px;background:var(--gray);padding:2px 7px;border-radius:4px">\${v.targa||'—'}</span></td>
-      <td>\${badge(v.categoria||'—','bg-n')}</td>
-      <td>\${badge(v.tipo_contratto||'—','bg-gr')}</td>
-      <td style="font-weight:600">\${fData(v.data_scadenza)}</td>
-      <td><span style="color:\${gg(v.data_scadenza)<=30?'#991B1B':gg(v.data_scadenza)<=60?'var(--orange)':'var(--green)'};font-weight:600">\${gg(v.data_scadenza)} gg</span></td>
-      \${isDir()?\`<td style="font-size:11.5px">\${v.venditore_nome||'—'}</td>\`:''}
-    </tr>\`).join('')}
+    ${scadenze.map(v=>`<tr>
+      <td style="font-weight:600">${v.cliente_nome||'—'}</td>
+      <td>${v.modello||'—'}</td>
+      <td><span style="font-family:monospace;font-size:11px;background:var(--gray);padding:2px 7px;border-radius:4px">${v.targa||'—'}</span></td>
+      <td>${badge(v.categoria||'—','bg-n')}</td>
+      <td>${badge(v.tipo_contratto||'—','bg-gr')}</td>
+      <td style="font-weight:600">${fData(v.data_scadenza)}</td>
+      <td><span style="color:${gg(v.data_scadenza)<=30?'#991B1B':gg(v.data_scadenza)<=60?'var(--orange)':'var(--green)'};font-weight:600">${gg(v.data_scadenza)} gg</span></td>
+      ${isDir()?`<td style="font-size:11.5px">${v.venditore_nome||'—'}</td>`:''}
+    </tr>`).join('')}
     </tbody></table></div>
   </div>
   <div class="full-card">
@@ -2579,24 +2579,24 @@ async function rFlotta(){
       <button class="btn btn-sm btn-navy" onclick="openModal('modal-nuovo-cliente-flotta')"><i class="ti ti-user-plus"></i> Nuovo cliente</button>
     </div>
     <div class="tbl-wrap"><table class="tbl"><thead><tr>
-      <th>Cliente</th><th>Città</th><th>Tipo</th><th>Veicoli</th>\${isDir()?'<th>Consulente</th>':''}<th>Stato</th><th>Azioni</th>
+      <th>Cliente</th><th>Città</th><th>Tipo</th><th>Veicoli</th>${isDir()?'<th>Consulente</th>':''}<th>Stato</th><th>Azioni</th>
     </tr></thead><tbody>
-    \${clienti.map(c=>{
+    ${clienti.map(c=>{
       const cv=veicoli.filter(v=>v.cliente_id===c.id);
-      return\`<tr onclick="openClient(\${c.id})">
-        <td><div style="display:flex;align-items:center;gap:8px">\${mav((c.nome||'').slice(0,2).toUpperCase())}<div style="font-weight:600">\${c.nome}</div></div></td>
-        <td>\${c.citta||'—'}</td>
-        <td>\${badge(c.tipo||'Privato',c.tipo==='Azienda'?'bg-n':'bg-gr')}</td>
-        <td style="font-weight:600">\${cv.length}</td>
-        \${isDir()?\`<td style="font-size:11.5px">\${c.venditore_nome||'—'}</td>\`:''}
-        <td>\${stBadge(c.stato||'Lead')}</td>
+      return`<tr onclick="openClient(${c.id})">
+        <td><div style="display:flex;align-items:center;gap:8px">${mav((c.nome||'').slice(0,2).toUpperCase())}<div style="font-weight:600">${c.nome}</div></div></td>
+        <td>${c.citta||'—'}</td>
+        <td>${badge(c.tipo||'Privato',c.tipo==='Azienda'?'bg-n':'bg-gr')}</td>
+        <td style="font-weight:600">${cv.length}</td>
+        ${isDir()?`<td style="font-size:11.5px">${c.venditore_nome||'—'}</td>`:''}
+        <td>${stBadge(c.stato||'Lead')}</td>
         <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">
-          <button class="btn btn-sm" onclick="window._currentTimelineClienteId=\${c.id};window._currentTimelineNome='\${(c.nome||'').replace(/'/g,'')}';openTimeline(\${c.id})"><i class="ti ti-timeline"></i></button>
+          <button class="btn btn-sm" onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineNome='${(c.nome||'').replace(/'/g,'')}';openTimeline(${c.id})"><i class="ti ti-timeline"></i></button>
         </div></td>
-      </tr>\`;
+      </tr>`;
     }).join('')}
     </tbody></table></div>
-  </div>\`;
+  </div>`;
 }
 
 // ═══════════════════════════════════════════
@@ -2627,12 +2627,12 @@ async function rDirOverview(){
   }));
   const totContratti=contratti.filter(c=>c.mese===meseCorrente).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
   const totMargine=contratti.filter(c=>c.mese===meseCorrente).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
-  document.getElementById('content').innerHTML=\`
+  document.getElementById('content').innerHTML=`
   <div class="kpi-g">
-    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Clienti totali</div><div class="kpi-v">\${clienti.length}</div><div class="kpi-d" style="color:var(--text3)">Team completo</div></div>
-    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Consulenti attivi</div><div class="kpi-v">\${venditori.length}</div><div class="kpi-d" style="color:var(--text3)">In organico</div></div>
-    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Pezzi mese corrente</div><div class="kpi-v">\${totContratti}</div><div class="kpi-d" style="color:var(--text3)">\${new Date().toLocaleString('it-IT',{month:'long',year:'numeric'})}</div></div>
-    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Margine mese corrente</div><div class="kpi-v">€ \${totMargine.toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">Team totale</div></div>
+    <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Clienti totali</div><div class="kpi-v">${clienti.length}</div><div class="kpi-d" style="color:var(--text3)">Team completo</div></div>
+    <div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">Consulenti attivi</div><div class="kpi-v">${venditori.length}</div><div class="kpi-d" style="color:var(--text3)">In organico</div></div>
+    <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Pezzi mese corrente</div><div class="kpi-v">${totContratti}</div><div class="kpi-d" style="color:var(--text3)">${new Date().toLocaleString('it-IT',{month:'long',year:'numeric'})}</div></div>
+    <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Margine mese corrente</div><div class="kpi-v">€ ${totMargine.toLocaleString('it-IT')}</div><div class="kpi-d" style="color:var(--text3)">Team totale</div></div>
   </div>
   <div class="full-card">
     <div class="card-head">
@@ -2642,17 +2642,17 @@ async function rDirOverview(){
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>Consulente</th><th>Ruolo</th><th>Clienti</th><th>Lead attive</th><th>Pezzi mese</th><th>Margine mese</th><th>Pezzi totali</th><th>Margine totale</th></tr></thead>
       <tbody>
-      \${stats.sort((a,b)=>b.margine_mese-a.margine_mese).map(u=>\`<tr>
-        <td><div style="display:flex;align-items:center;gap:8px"><div class="uav" style="width:32px;height:32px;font-size:11px">\${u.init}</div><strong>\${u.nome}</strong></div></td>
-        <td style="font-size:11px;color:var(--text2)">\${u.ruolo_label}</td>
-        <td style="text-align:center">\${u.clienti}</td>
-        <td style="text-align:center;color:var(--orange)">\${u.lead}</td>
-        <td style="text-align:center;font-weight:700">\${u.contratti_mese}</td>
-        <td style="font-weight:700;color:var(--orange)">€ \${u.margine_mese.toLocaleString('it-IT')}</td>
-        <td style="text-align:center">\${u.contratti_tot}</td>
-        <td>€ \${u.margine_tot.toLocaleString('it-IT')}</td>
-      </tr>\`).join('')}
-      \${stats.length===0?\`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">Nessun consulente trovato</td></tr>\`:''}
+      ${stats.sort((a,b)=>b.margine_mese-a.margine_mese).map(u=>`<tr>
+        <td><div style="display:flex;align-items:center;gap:8px"><div class="uav" style="width:32px;height:32px;font-size:11px">${u.init}</div><strong>${u.nome}</strong></div></td>
+        <td style="font-size:11px;color:var(--text2)">${u.ruolo_label}</td>
+        <td style="text-align:center">${u.clienti}</td>
+        <td style="text-align:center;color:var(--orange)">${u.lead}</td>
+        <td style="text-align:center;font-weight:700">${u.contratti_mese}</td>
+        <td style="font-weight:700;color:var(--orange)">€ ${u.margine_mese.toLocaleString('it-IT')}</td>
+        <td style="text-align:center">${u.contratti_tot}</td>
+        <td>€ ${u.margine_tot.toLocaleString('it-IT')}</td>
+      </tr>`).join('')}
+      ${stats.length===0?`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">Nessun consulente trovato</td></tr>`:''}
       </tbody>
     </table></div>
   </div>
@@ -2661,20 +2661,20 @@ async function rDirOverview(){
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>Data</th><th>Consulente</th><th>Cliente</th><th>Prodotto</th><th>Pezzi</th><th>Margine</th><th>Lordo</th><th>Netto</th></tr></thead>
       <tbody>
-      \${contratti.slice(0,20).map(c=>\`<tr>
-        <td style="font-size:11px">\${c.data_firma?new Date(c.data_firma).toLocaleDateString('it-IT'):c.mese||'—'}</td>
-        <td style="font-weight:600;font-size:11.5px">\${c.venditore_nome||'—'}</td>
-        <td>\${c.cliente||'—'}</td>
-        <td style="font-size:11px">\${c.prodotto||'—'}</td>
-        <td style="text-align:center;font-weight:700">\${c.pezzi||1}</td>
-        <td style="color:var(--orange)">€ \${(parseFloat(c.margine)||0).toLocaleString('it-IT')}</td>
-        <td style="font-weight:700">€ \${(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))).toLocaleString('it-IT')}</td>
-        <td style="font-weight:700;color:\${(parseFloat(c.margine_netto)||0)>=0?'var(--green)':'var(--red)'}">€ \${(parseFloat(c.margine_netto)||0).toLocaleString('it-IT')}</td>
-      </tr>\`).join('')}
-      \${contratti.length===0?\`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">Nessun contratto</td></tr>\`:''}
+      ${contratti.slice(0,20).map(c=>`<tr>
+        <td style="font-size:11px">${c.data_firma?new Date(c.data_firma).toLocaleDateString('it-IT'):c.mese||'—'}</td>
+        <td style="font-weight:600;font-size:11.5px">${c.venditore_nome||'—'}</td>
+        <td>${c.cliente||'—'}</td>
+        <td style="font-size:11px">${c.prodotto||'—'}</td>
+        <td style="text-align:center;font-weight:700">${c.pezzi||1}</td>
+        <td style="color:var(--orange)">€ ${(parseFloat(c.margine)||0).toLocaleString('it-IT')}</td>
+        <td style="font-weight:700">€ ${(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))).toLocaleString('it-IT')}</td>
+        <td style="font-weight:700;color:${(parseFloat(c.margine_netto)||0)>=0?'var(--green)':'var(--red)'}">€ ${(parseFloat(c.margine_netto)||0).toLocaleString('it-IT')}</td>
+      </tr>`).join('')}
+      ${contratti.length===0?`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">Nessun contratto</td></tr>`:''}
       </tbody>
     </table></div>
-  </div>\`;
+  </div>`;
 }
 
 // ═══════════════════════════════════════════
