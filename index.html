@@ -2414,31 +2414,154 @@ async function eliminaPdf(contratoId,pdfIndex){
 
 async function esportaExcel(){
   let contratti=[];
+  // Leggi filtri attivi nella pagina
+  const filtroMese=document.getElementById('filtro-mese')?.value||'';
+  const filtroVend=document.getElementById('filtro-venditore')?.value||'';
   try{
     let q=sb.from('contratti_chiusi').select('*').order('mese',{ascending:false});
     if(!isDir())q=q.eq('venditore_id',CU.id);
+    if(filtroMese)q=q.eq('mese',filtroMese);
+    if(filtroVend)q=q.eq('venditore_id',parseInt(filtroVend));
     const{data}=await q;contratti=data||[];
-  }catch(e){showToast('Errore');return;}
-  if(!contratti.length){showToast('Nessun contratto');return;}
-  const headers=['Mese','Data contratto firmato','N° BO','Data BO','Consulente','Partner di fatturazione','Società di noleggio','Nominativo Cliente','Città','Provenienza','Prodotto','Durata noleggio in mesi','Data inizio noleggio','Data fine noleggio','Marca e modello Veicolo','Tipo Veicolo','Pezzi','Margine Unitario (€)','Bonus (€)','Margine Totale Lordo (€)','Nominativo Segnalatore','Costo Segnalazione (€)','Altri costi','Provvigioni consulente','Margine netto','Collega in tandem','Note'];
-  const rows=contratti.map(c=>[
-    c.mese||'',c.data_firma||'',c.nbo||'',c.data_bo||'',c.venditore_nome||'',
-    c.partner||'',c.societa_noleggio||'',c.cliente||'',c.citta||'',c.provenienza||'',
-    c.prodotto||'',c.durata_noleggio||'',c.data_inizio||'',c.data_fine||'',
-    c.veicolo||'',c.tipo_veicolo||'',c.pezzi||1,
-    (parseFloat(c.margine)||0).toFixed(2),(parseFloat(c.bonus)||0).toFixed(2),
+  }catch(e){showToast('Errore caricamento dati');return;}
+  if(!contratti.length){showToast('Nessun contratto da esportare');return;}
+
+  const headers=['Mese','Data contratto firmato','N° BO','Data BO','Consulente',
+    'Partner di fatturazione','Società di noleggio','Nominativo Cliente','Città',
+    'Provenienza','Prodotto','Durata noleggio in mesi','Data inizio noleggio',
+    'Data fine noleggio','Marca e modello Veicolo','Tipo Veicolo','Pezzi',
+    'Margine Unitario (€)','Bonus (€)','Margine Totale Lordo (€)',
+    'Nominativo Segnalatore','Costo Segnalazione (€)','Altri costi',
+    'Provvigioni consulente','Margine netto','Collega in tandem','Note'];
+
+  const sep=';';
+  const esc=v=>{
+    const s=String(v===null||v===undefined?'':v);
+    return '"'+s.replace(/"/g,'""')+'"';
+  };
+
+  const toRow=c=>[
+    c.mese||'',
+    c.data_firma||'',
+    c.nbo||'',
+    c.data_bo||'',
+    c.venditore_nome||'',
+    c.partner||'',
+    c.societa_noleggio||'',
+    c.cliente||'',
+    c.citta||'',
+    c.provenienza||'',
+    c.prodotto||'',
+    c.durata_noleggio||'',
+    c.data_inizio||'',
+    c.data_fine||'',
+    c.veicolo||'',
+    c.tipo_veicolo||'',
+    c.pezzi||1,
+    (parseFloat(c.margine)||0).toFixed(2),
+    (parseFloat(c.bonus)||0).toFixed(2),
     (parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))).toFixed(2),
-    c.segnalatore||'',(parseFloat(c.margine_segnalazione)||0).toFixed(2),
-    (parseFloat(c.altri_costi)||0).toFixed(2),(parseFloat(c.provvigioni)||0).toFixed(2),
-    (parseFloat(c.margine_netto)||0).toFixed(2),c.collega||'',c.note||''
-  ]);
-  const sep=';';const qt='"';const esc=v=>qt+String(v||'').replace(/"/g,qt+qt)+qt;
-  const csv='\\uFEFF'+[headers.map(esc).join(sep),...rows.map(r=>r.map(esc).join(sep))].join('\\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download=`Report_Contratti_${isDir()?'Team':CU.nome.replace(/ /g,'_')}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();URL.revokeObjectURL(url);showToast('Excel esportato!');
+    c.segnalatore||'',
+    (parseFloat(c.margine_segnalazione)||0).toFixed(2),
+    (parseFloat(c.altri_costi)||0).toFixed(2),
+    (parseFloat(c.provvigioni)||0).toFixed(2),
+    (parseFloat(c.margine_netto)||0).toFixed(2),
+    c.collega||'',
+    c.note||''
+  ].map(esc).join(sep);
+
+  if(isDir()&&!filtroVend){
+    // Per Biagio/Direzione senza filtro: crea un file diviso per consulente
+    const byVend={};
+    contratti.forEach(c=>{
+      const v=c.venditore_nome||'Sconosciuto';
+      if(!byVend[v])byVend[v]=[];
+      byVend[v].push(c);
+    });
+
+    // Scarica un file zip simulato: un CSV per consulente
+    const venditori=Object.keys(byVend).sort();
+    
+    // Crea un unico CSV con separatore di sezione per consulente
+    let csvFull='';
+    const encoder=new TextEncoder();
+    
+    for(const vend of venditori){
+      const rows=byVend[vend];
+      // Sezione consulente
+      const section=[
+        esc('═══ CONSULENTE: '+vend+' ═══ ('+rows.length+' contratti) ═══'),
+        ...Array(26).fill(esc(''))
+      ].join(sep);
+      
+      const hdrRow=headers.map(esc).join(sep);
+      const dataRows=rows.map(toRow);
+      
+      // Totali per consulente
+      const totPezzi=rows.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
+      const totLordo=rows.reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))),0);
+      const totProvv=rows.reduce((s,c)=>s+(parseFloat(c.provvigioni)||0),0);
+      const totNetto=rows.reduce((s,c)=>s+(parseFloat(c.margine_netto)||0),0);
+      
+      const totRow=[
+        esc('TOTALE '+vend),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),
+        esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),
+        esc(totPezzi),esc(''),esc(''),esc(totLordo.toFixed(2)),
+        esc(''),esc(''),esc(''),esc(totProvv.toFixed(2)),esc(totNetto.toFixed(2)),esc(''),esc('')
+      ].join(sep);
+      
+      csvFull+=section+'\n'+hdrRow+'\n'+dataRows.join('\n')+'\n'+totRow+'\n\n';
+    }
+    
+    // Totale generale
+    const totGenPezzi=contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
+    const totGenLordo=contratti.reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))),0);
+    const totGenNetto=contratti.reduce((s,c)=>s+(parseFloat(c.margine_netto)||0),0);
+    const totGenRow=[
+      esc('TOTALE GENERALE'),esc(''),esc(''),esc(''),esc('Tutti i consulenti'),esc(''),esc(''),esc(''),esc(''),esc(''),
+      esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),
+      esc(totGenPezzi),esc(''),esc(''),esc(totGenLordo.toFixed(2)),
+      esc(''),esc(''),esc(''),esc(''),esc(totGenNetto.toFixed(2)),esc(''),esc('')
+    ].join(sep);
+    csvFull+='\n'+totGenRow;
+
+    // Scrivi con BOM UTF-8
+    const BOM=new Uint8Array([0xEF,0xBB,0xBF]);
+    const csvBytes=encoder.encode(csvFull);
+    const combined=new Uint8Array(BOM.length+csvBytes.length);
+    combined.set(BOM,0);combined.set(csvBytes,BOM.length);
+    const blob=new Blob([combined],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='Report_Contratti_Team_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();URL.revokeObjectURL(url);
+    showToast('Excel esportato — '+venditori.length+' consulenti!');
+
+  } else {
+    // Per singolo consulente: CSV semplice
+    const rows=contratti.map(toRow);
+    const totPezzi=contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
+    const totLordo=contratti.reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))),0);
+    const totNetto=contratti.reduce((s,c)=>s+(parseFloat(c.margine_netto)||0),0);
+    const totRow=[esc('TOTALE'),...Array(15).fill(esc('')),esc(totPezzi),esc(''),esc(''),esc(totLordo.toFixed(2)),esc(''),esc(''),esc(''),esc(''),esc(totNetto.toFixed(2)),esc(''),esc('')].join(sep);
+    
+    const csvContent=[headers.map(esc).join(sep),...rows,totRow].join('\n');
+    const BOM=new Uint8Array([0xEF,0xBB,0xBF]);
+    const encoder=new TextEncoder();
+    const csvBytes=encoder.encode(csvContent);
+    const combined=new Uint8Array(BOM.length+csvBytes.length);
+    combined.set(BOM,0);combined.set(csvBytes,BOM.length);
+    const blob=new Blob([combined],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='Report_Contratti_'+CU.nome.replace(/ /g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();URL.revokeObjectURL(url);
+    showToast('Excel esportato!');
+  }
 }
+
 
 async function salvaContratto(){
   const btn=document.getElementById('save-contratto-btn');
