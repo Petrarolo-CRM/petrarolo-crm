@@ -1042,17 +1042,19 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
 </div>
 
 <script>
+/* © 2026 Petrarolo & Co. SRL SB — Moving Solutions. Tutti i diritti riservati. */
+
 /* © 2026 Petrarolo & Co. SRL SB — Moving Solutions. Tutti i diritti riservati. Unauthorized copying prohibited. */
 let sb = null;
 let CU = null; 
-let _ac = null;
-let _cs = 'dashboard';
-let _am = [{role:'ai',text:'Ciao! Sono l\'assistente AI di Petrarolo & Co. SRL SB — Moving Solutions. Posso analizzare clienti, suggerire azioni commerciali e generare email professionali. Come posso aiutarti?'}];
+let activeClient = null;
+let currentSec = 'dashboard';
+let aiMsgs = [{role:'ai',text:'Ciao! Sono l\'assistente AI di Petrarolo & Co. SRL SB — Moving Solutions. Posso analizzare clienti, suggerire azioni commerciali e generare email professionali. Come posso aiutarti?'}];
 function saveConfig() {
 let url = document.getElementById('sb-url').value.trim();
 const key = document.getElementById('sb-key').value.trim();
 const err = document.getElementById('setup-err');
-if (!url || !key) { _se(err,'Inserisci entrambi i campi.'); return; }
+if (!url || !key) { showErr(err,'Inserisci entrambi i campi.'); return; }
 if (!url.startsWith('https:
 if (url.includes('/rest/v1')) url = url.split('/rest/v1')[0];
 if (url.endsWith('/')) url = url.slice(0,-1);
@@ -1073,7 +1075,7 @@ startApp();
 document.getElementById('login-screen').style.display='flex';
 }
 } catch(e) {
-_se(document.getElementById('setup-err'),'Errore di connessione: '+e.message+'. Verifica URL e chiave.');
+showErr(document.getElementById('setup-err'),'Errore di connessione: '+e.message+'. Verifica URL e chiave.');
 }
 }
 async function doLogin() {
@@ -1081,21 +1083,21 @@ const email = document.getElementById('l-email').value.trim().toLowerCase();
 const pwd = document.getElementById('l-pwd').value;
 const err = document.getElementById('login-err');
 const btn = document.getElementById('login-btn');
-if (!email || !pwd) { _se(err,'Inserisci email e password.'); return; }
+if (!email || !pwd) { showErr(err,'Inserisci email e password.'); return; }
 btn.disabled=true; btn.innerHTML='<i class="ti ti-loader"></i> Accesso in corso...';
 err.style.display='none';
 try {
 const {data,error} = await sb.from('crm_utenti').select('*').eq('email',email).single();
-if (error || !data) { _se(err,'Email non trovata.'); btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Accedi'; return; }
+if (error || !data) { showErr(err,'Email non trovata.'); btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Accedi'; return; }
 const hashed = btoa(pwd + '_petrarolo_salt_2024');
-if (data.password_hash !== hashed) { _se(err,'Password errata.'); btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Accedi'; return; }
-if (!data.attivo) { _se(err,'Account disabilitato. Contatta l\'amministratore.'); btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Accedi'; return; }
+if (data.password_hash !== hashed) { showErr(err,'Password errata.'); btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Accedi'; return; }
+if (!data.attivo) { showErr(err,'Account disabilitato. Contatta l\'amministratore.'); btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Accedi'; return; }
 CU = {id:data.id, nome:data.nome, email:data.email, ruolo:data.ruolo, ruolo_label:data.ruolo_label||'', must_change:data.must_change_pwd};
 localStorage.setItem('p_sess', JSON.stringify(CU));
 document.getElementById('login-screen').style.display='none';
 if(CU.must_change){showChangePwd();}else{startApp();}
 } catch(e) {
-_se(err,'Errore di connessione: '+e.message);
+showErr(err,'Errore di connessione: '+e.message);
 btn.disabled=false; btn.innerHTML='<i class="ti ti-login"></i> Accedi';
 }
 }
@@ -1107,8 +1109,8 @@ const p1=document.getElementById('cp-pwd1').value;
 const p2=document.getElementById('cp-pwd2').value;
 const err=document.getElementById('cp-err');
 err.style.display='none';
-if(!p1||p1.length<6){_se(err,'Password minimo 6 caratteri.');return;}
-if(p1!==p2){_se(err,'Le password non coincidono.');return;}
+if(!p1||p1.length<6){showErr(err,'Password minimo 6 caratteri.');return;}
+if(p1!==p2){showErr(err,'Le password non coincidono.');return;}
 const btn=document.getElementById('cp-btn');
 btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
 try{
@@ -1124,8 +1126,8 @@ window.history.replaceState({}, document.title, window.location.pathname);
 }
 document.getElementById('change-pwd-screen').style.display='none';
 startApp();
-_st('Password aggiornata con successo!');
-}catch(e){_se(err,'Errore: '+e.message);}
+showToast('Password aggiornata con successo!');
+}catch(e){showErr(err,'Errore: '+e.message);}
 btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva nuova password';
 }
 function rAI(){
@@ -1137,7 +1139,7 @@ document.getElementById('content').innerHTML=`
 <div><div class="card-title" style="color:#fff">AI Assistant</div><div style="font-size:10.5px;color:rgba(255,255,255,.45)">Powered by Claude</div></div>
 </div>
 </div>
-<div class="ai-msgs" id="ai-msgs">${_am.map(m=>msgH(m)).join('')}</div>
+<div class="ai-msgs" id="ai-msgs">${aiMsgs.map(m=>msgH(m)).join('')}</div>
 <div class="ai-sugg">
 <div class="ai-chip" data-q="Analizza le trattative in chiusura e suggerisci le azioni prioritarie">Trattative prioritarie ↗</div>
 <div class="ai-chip" data-q="Scrivi una email per proporre il rinnovo NLT della flotta aziendale">Email rinnovo NLT ↗</div>
@@ -1162,15 +1164,15 @@ document.getElementById('content').innerHTML=`
 </div>`;}
 async function rAttivita(){
 let data=[];
-try{let q=sb.from('attivita').select('*').order('created_at',{ascending:false});if(!_id())q=q.eq('assegnato_id',CU.id);const r=await q;data=r.data||[];}catch(e){console.log('Attivita:',e.message);}
+try{let q=sb.from('attivita').select('*').order('created_at',{ascending:false});if(!isDir())q=q.eq('assegnato_id',CU.id);const r=await q;data=r.data||[];}catch(e){console.log('Attivita:',e.message);}
 document.getElementById('content').innerHTML=`
 <div class="full-card">
-<div class="card-head"><span class="card-title"><i class="ti ti-checklist" style="color:var(--orange);margin-right:6px"></i>${_id()?'Attività team':'Le mie attività'} — ${data.length}</span></div>
+<div class="card-head"><span class="card-title"><i class="ti ti-checklist" style="color:var(--orange);margin-right:6px"></i>${isDir()?'Attività team':'Le mie attività'} — ${data.length}</span></div>
 <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Attività</th><th>Cliente</th><th>Priorità</th><th>Scadenza</th><th>Assegnato</th><th>Stato</th></tr></thead><tbody>
 ${data.length?data.map(a=>`<tr><td style="font-weight:600">${a.titolo||'—'}</td><td>${a.cliente||'—'}</td>
-<td>${_bg(a.priorita||'—',a.priorita==='Alta'?'bg-r':a.priorita==='Media'?'bg-o':'bg-gr')}</td>
+<td>${badge(a.priorita||'—',a.priorita==='Alta'?'bg-r':a.priorita==='Media'?'bg-o':'bg-gr')}</td>
 <td>${a.scadenza||'—'}</td><td>${a.assegnato||'—'}</td>
-<td>${_bg(a.stato||'—',a.stato==='Completata'?'bg-g':a.stato==='In corso'?'bg-n':'bg-o')}</td>
+<td>${badge(a.stato||'—',a.stato==='Completata'?'bg-g':a.stato==='In corso'?'bg-n':'bg-o')}</td>
 </tr>`).join(''):`<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3)">Nessuna attività</td></tr>`}
 </tbody></table></div>
 </div>`;}
@@ -1182,13 +1184,13 @@ const roleColors={direzione:'bg-go',cfo:'bg-go',venditore:'bg-n',admin:'bg-r'};
 const roleLbl={direzione:'Direzione',cfo:'CFO',venditore:'Consulente',admin:'Admin'};
 document.getElementById('content').innerHTML=`
 <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-<button class="btn btn-orange" onclick="_om('modal-utente')"><i class="ti ti-user-plus"></i> Nuovo utente</button>
+<button class="btn btn-orange" onclick="openModal('modal-utente')"><i class="ti ti-user-plus"></i> Nuovo utente</button>
 </div>
 <div style="display:flex;flex-direction:column;gap:10px">
 ${data.map(u=>`<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:15px 17px;display:flex;align-items:center;gap:12px;opacity:${u.attivo?1:.55}">
 <div class="uav" style="width:42px;height:42px;font-size:13px;background:${u.ruolo==='direzione'?'var(--gold)':u.ruolo==='admin'?'var(--red)':'var(--navy)'}">${(u.nome||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}</div>
 <div style="flex:1"><div style="font-size:13px;font-weight:700">${u.nome}</div><div style="font-size:11.5px;color:var(--text2)">${u.email}</div>
-<div style="margin-top:4px;display:flex;gap:5px">${_bg(u.ruolo_label||roleLbl[u.ruolo]||u.ruolo,roleColors[u.ruolo]||'bg-gr')} ${u.attivo?_bg('Attivo','bg-g'):_bg('Disabilitato','bg-r')}</div>
+<div style="margin-top:4px;display:flex;gap:5px">${badge(u.ruolo_label||roleLbl[u.ruolo]||u.ruolo,roleColors[u.ruolo]||'bg-gr')} ${u.attivo?badge('Attivo','bg-g'):badge('Disabilitato','bg-r')}</div>
 </div>
 <div style="display:flex;gap:5px">
 ${u.id!==CU.id?`<button class="btn btn-sm" onclick="inviaResetEmail(${u.id},'${u.nome}','${u.email}')"><i class="ti ti-mail-forward"></i> Reset</button>
@@ -1208,7 +1210,7 @@ document.getElementById('content').innerHTML=`
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px 14px;background:var(--gray);border-radius:9px">
 <div class="uav" style="width:44px;height:44px;font-size:15px">${(CU?.nome||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2)}</div>
 <div><div style="font-size:14px;font-weight:700">${CU?.nome||'—'}</div><div style="font-size:12px;color:var(--text2)">${CU?.email||'—'}</div>
-<div style="margin-top:5px">${_bg(roleLabel,roleBadge)}</div></div>
+<div style="margin-top:5px">${badge(roleLabel,roleBadge)}</div></div>
 </div>
 <button class="btn btn-red" style="width:100%;justify-content:center" onclick="doLogout()"><i class="ti ti-logout"></i> Disconnetti</button>
 </div>
@@ -1241,7 +1243,7 @@ document.getElementById('content').innerHTML=`
 <button class="btn" style="width:100%;justify-content:center" onclick="localStorage.removeItem('p_url');localStorage.removeItem('p_key');location.reload()"><i class="ti ti-refresh"></i> Cambia configurazione</button>
 </div>
 </div>
-${_id()?`<div class="card"><div class="card-head"><span class="card-title"><i class="ti ti-shield-lock" style="color:var(--orange);margin-right:6px"></i>Gestione utenti</span></div><div style="padding:16px 17px"><button class="btn btn-orange" style="width:100%;justify-content:center" onclick="_nt('utenti')"><i class="ti ti-users"></i> Gestisci utenti</button></div></div>`:'<div></div>'}
+${isDir()?`<div class="card"><div class="card-head"><span class="card-title"><i class="ti ti-shield-lock" style="color:var(--orange);margin-right:6px"></i>Gestione utenti</span></div><div style="padding:16px 17px"><button class="btn btn-orange" style="width:100%;justify-content:center" onclick="navTo('utenti')"><i class="ti ti-users"></i> Gestisci utenti</button></div></div>`:'<div></div>'}
 </div>`;}
 async function updatePresence(){
 if(!sb||!CU)return;
@@ -1273,9 +1275,9 @@ const nome=(document.getElementById('f-nome')?.value||'').trim();
 const cog=(document.getElementById('f-cognome')?.value||'').trim();
 const tel=(document.getElementById('f-tel')?.value||'').trim();
 const fonteVal=document.getElementById('f-fonte')?.value||'';
-if(!nome||!cog||!tel){if(err){_se(err,'Compila i campi obbligatori: Nome, Cognome, Telefono');}if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva lead';}return;}
-if(!fonteVal){if(err)_se(err,'Seleziona la provenienza del lead');if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva lead';}return;}
-if(fonteVal==='LEAD DA SEGNALATORE'&&!document.getElementById('f-segnalatore')?.value.trim()){if(err)_se(err,'Inserisci il nome del segnalatore');if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva lead';}return;}
+if(!nome||!cog||!tel){if(err){showErr(err,'Compila i campi obbligatori: Nome, Cognome, Telefono');}if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva lead';}return;}
+if(!fonteVal){if(err)showErr(err,'Seleziona la provenienza del lead');if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva lead';}return;}
+if(fonteVal==='LEAD DA SEGNALATORE'&&!document.getElementById('f-segnalatore')?.value.trim()){if(err)showErr(err,'Inserisci il nome del segnalatore');if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva lead';}return;}
 let fonte=fonteVal;
 if(fonteVal==='LEAD DA SEGNALATORE'){const s=(document.getElementById('f-segnalatore')?.value||'').trim();fonte=s?`LEAD DA SEGNALATORE — ${s}`:'LEAD DA SEGNALATORE';}
 try{
@@ -1293,8 +1295,8 @@ note:document.getElementById('f-note')?.value||'',
 created_by:CU.nome
 });
 if(error)throw error;
-_cm('modal-lead');
-_st('Lead salvato con successo!');
+closeModal('modal-lead');
+showToast('Lead salvato con successo!');
 const selVend=document.getElementById('f-venditore-assegna');
 if(selVend&&selVend.value&&parseInt(selVend.value)!==CU.id){
 const nome=`${(document.getElementById('f-nome')?.value||'')} ${(document.getElementById('f-cognome')?.value||'')}`.trim();
@@ -1303,8 +1305,8 @@ inviaNotifica(parseInt(selVend.value),'lead_assegnata',`Ti è stata assegnata un
 ['f-nome','f-cognome','f-tel','f-email','f-citta','f-modello','f-note','f-segnalatore'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 const sel=document.getElementById('f-fonte');if(sel)sel.value='';
 toggleSegnalatore('');
-_rs('clienti');
-}catch(e){if(err)_se(err,'Errore: '+e.message);}
+renderSec('clienti');
+}catch(e){if(err)showErr(err,'Errore: '+e.message);}
 if(btn){btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva lead';}
 }
 function msgH(m){
@@ -1320,29 +1322,29 @@ if(inp){inp.onkeydown=null;inp.addEventListener('keydown',function(e){if(e.key==
 document.querySelectorAll('.ai-chip').forEach(ch=>ch.onclick=()=>sendAI(ch.dataset.q));
 }
 async function sendAI(msg){
-if(!Array.isArray(_am))_am=[];
-_am.push({role:'user',text:msg});
-const render=()=>_am.map(m=>msgH(m)).join('');
+if(!Array.isArray(aiMsgs))aiMsgs=[];
+aiMsgs.push({role:'user',text:msg});
+const render=()=>aiMsgs.map(m=>msgH(m)).join('');
 const box=document.getElementById('ai-msgs');
 if(box){box.innerHTML=render()+'<div class="ai-msg"><div class="ai-av" style="background:var(--orange);color:#fff">AI</div><div class="ai-bubble bot"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>';box.scrollTop=box.scrollHeight;}
 const sys='Sei l\'assistente AI del CRM di Petrarolo & Co. SRL SB. Utente: '+(CU?.nome||'Utente')+' ('+(CU?.ruolo||'venditore')+'). Rispondi in italiano, professionale e conciso.';
 try{
 const res=await fetch('https:
 const data=await res.json();
-_am.push({role:'ai',text:data.content?.[0]?.text||'Risposta non disponibile.'});
-}catch(e){_am.push({role:'ai',text:'Errore di connessione.'});}
+aiMsgs.push({role:'ai',text:data.content?.[0]?.text||'Risposta non disponibile.'});
+}catch(e){aiMsgs.push({role:'ai',text:'Errore di connessione.'});}
 const b2=document.getElementById('ai-msgs');
 if(b2){b2.innerHTML=render();b2.scrollTop=b2.scrollHeight;}
 bindAI();
 }
-function aiAnal(nome){_nt('ai');setTimeout(()=>sendAI('Analizza il cliente '+nome+': suggerisci azioni commerciali e opportunità'),200);}
-function _om(id){
+function aiAnal(nome){navTo('ai');setTimeout(()=>sendAI('Analizza il cliente '+nome+': suggerisci azioni commerciali e opportunità'),200);}
+function openModal(id){
 const el=document.getElementById(id);
 if(el){el.classList.add('open');el.style.display='flex';}
 if(id==='modal-veicolo')setTimeout(popolaSelectClienti,100);
 if(id==='modal-lead'){
 const grp=document.getElementById('f-assegna-grp');
-if(grp&&_ca()){
+if(grp&&canAssign()){
 grp.style.display='block';
 setTimeout(popolaVenditoriAssegna,100);
 }
@@ -1366,11 +1368,11 @@ const errEl=document.getElementById('contratto-err');
 if(errEl)errEl.style.display='none';
 }
 }
-function _cm(id){
+function closeModal(id){
 const el=document.getElementById(id);
 if(el){el.classList.remove('open');el.style.display='none';}
 }
-function _st(msg){
+function showToast(msg){
 let t=document.getElementById('toast');
 if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:9px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.2)';document.body.appendChild(t);}
 t.textContent=msg;t.style.opacity='1';
@@ -1378,14 +1380,14 @@ clearTimeout(t._to);t._to=setTimeout(()=>{t.style.opacity='0';},3000);
 }
 let _assegnaClienteId = null;
 let _assegnaVecchioId = null;
-function _ca(){
+function canAssign(){
 return CU.ruolo==='direzione' || CU.email==='anita@petraroloeco.com';
 }
-function _cva(){
+function canViewAll(){
 return CU.ruolo==='direzione' || CU.ruolo==='cfo' || CU.email==='anita@petraroloeco.com';
 }
 async function apriNotifiche(){
-_om('modal-notifiche');
+openModal('modal-notifiche');
 const list=document.getElementById('notifiche-list');
 list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Caricamento...</div>';
 try{
@@ -1411,18 +1413,18 @@ async function segnaLetteTutte(){
 try{
 await sb.from('notifiche').update({letta:true}).eq('utente_id',CU.id);
 aggiornaContatorNotifiche();
-_cm('modal-notifiche');
-_st('Tutte le notifiche segnate come lette');
+closeModal('modal-notifiche');
+showToast('Tutte le notifiche segnate come lette');
 }catch(e){}
 }
 async function aggiornaContatorNotifiche(){
 try{
 const{data}=await sb.from('notifiche').select('id',{count:'exact'}).eq('utente_id',CU.id).eq('letta',false);
 const n=data?.length||0;
-const _bg=document.getElementById('notifiche-badge');
-if(_bg){
-_bg.style.display=n>0?'block':'none';
-_bg.textContent=n>9?'9+':n;
+const badge=document.getElementById('notifiche-badge');
+if(badge){
+badge.style.display=n>0?'block':'none';
+badge.textContent=n>9?'9+':n;
 }
 }catch(e){}
 }
@@ -1457,14 +1459,14 @@ sel.appendChild(o);
 });
 }catch(e){}
 document.getElementById('assegna-motivo').value='';
-_om('modal-assegna');
+openModal('modal-assegna');
 }
 async function confermaAssegna(){
 const nuovoId=parseInt(document.getElementById('assegna-venditore-sel').value);
 const motivo=document.getElementById('assegna-motivo').value.trim();
 const err=document.getElementById('assegna-err');
 err.style.display='none';
-if(!nuovoId){_se(err,'Seleziona un venditore.');return;}
+if(!nuovoId){showErr(err,'Seleziona un venditore.');return;}
 const btn=document.getElementById('assegna-btn');
 btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
 try{
@@ -1488,16 +1490,16 @@ await inviaNotifica(vecchioId,'lead_rimossa',
 `La lead ${cliente.nome} è stata riassegnata a ${nuovoNome}${motivo?' — '+motivo:''}`,
 _assegnaClienteId,cliente.nome);
 }
-_cm('modal-assegna');
-_cm('modal-timeline');
-_st(`Lead riassegnata a ${nuovoNome}!`);
-_rs('clienti');
-}catch(e){_se(err,'Errore: '+e.message);}
+closeModal('modal-assegna');
+closeModal('modal-timeline');
+showToast(`Lead riassegnata a ${nuovoNome}!`);
+renderSec('clienti');
+}catch(e){showErr(err,'Errore: '+e.message);}
 btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Riassegna';
 }
 async function openTimeline(clienteId){
 window._currentTimelineClienteId=clienteId;
-_om('modal-timeline');
+openModal('modal-timeline');
 const content=document.getElementById('timeline-content');
 content.innerHTML='<div style="padding:30px;text-align:center;color:var(--text3)">Caricamento...</div>';
 try{
@@ -1508,12 +1510,12 @@ sb.from('lead_attivita').select('*').eq('cliente_id',clienteId).order('created_a
 if(!cliente)throw new Error('Cliente non trovato');
 window._currentTimelineVenditoreId=cliente.venditore_id;
 document.getElementById('timeline-title').textContent=cliente.nome;
-document.getElementById('timeline-subtitle').textContent=`${cliente.citta||''} · Venditore: ${cliente.venditore_nome||'—'} · ${_bg(cliente.stato||'Lead','bg-o')}`;
+document.getElementById('timeline-subtitle').textContent=`${cliente.citta||''} · Venditore: ${cliente.venditore_nome||'—'} · ${badge(cliente.stato||'Lead','bg-o')}`;
 const canAdd=cliente.venditore_id===CU.id||(CU.ruolo==='direzione')||(CU.email==='anita@petraroloeco.com');
 const addBtn=document.getElementById('timeline-add-btn');
 if(addBtn)addBtn.style.display=canAdd?'inline-flex':'none';
 const assBtn=document.getElementById('timeline-assegna-btn');
-if(assBtn)assBtn.style.display=_ca()?'inline-flex':'none';
+if(assBtn)assBtn.style.display=canAssign()?'inline-flex':'none';
 const iconMap={
 'Chiamata telefonica':'ti-phone','Visita cliente':'ti-building','Email inviata':'ti-mail',
 'Preventivo inviato':'ti-file-invoice','Appuntamento fissato':'ti-calendar','Nota interna':'ti-notes'
@@ -1546,7 +1548,7 @@ ${a.risposta_cliente?`<div style="background:#fff;border-radius:7px;padding:8px 
 <div style="font-size:12px;color:var(--text2)">${a.risposta_cliente}</div>
 </div>`:''}
 ${a.tipo_preventivo?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-${_bg(a.tipo_preventivo,'bg-go')}
+${badge(a.tipo_preventivo,'bg-go')}
 ${a.importo_preventivo?`<span style="font-size:12px;font-weight:600;color:var(--orange)">€ ${parseFloat(a.importo_preventivo).toLocaleString('it-IT')}</span>`:''}
 ${a.pdf_url?`<a href="${a.pdf_url}" target="_blank" class="btn btn-sm" style="padding:3px 8px;font-size:10px"><i class="ti ti-file-type-pdf"></i> Preventivo PDF</a>`:''}
 </div>`:''}
@@ -1577,7 +1579,7 @@ const tipo=document.getElementById('tl-tipo').value;
 const desc=document.getElementById('tl-desc').value.trim();
 const err=document.getElementById('tl-err');
 err.style.display='none';
-if(!tipo||!desc){_se(err,'Compila tipo e descrizione.');return;}
+if(!tipo||!desc){showErr(err,'Compila tipo e descrizione.');return;}
 const btn=document.getElementById('tl-save-btn');
 btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
 let pdfUrl=null;
@@ -1608,9 +1610,9 @@ cliente_nome:window._currentTimelineNome||''
 });
 if(error)throw error;
 hideTimelineForm();
-_st('Attività salvata!');
+showToast('Attività salvata!');
 openTimeline(window._currentTimelineClienteId);
-}catch(e){_se(err,'Errore: '+e.message);}
+}catch(e){showErr(err,'Errore: '+e.message);}
 btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva attività';
 }
 async function popolaVenditoriAssegna(){
@@ -1638,7 +1640,7 @@ async function rReportLead(){
 let leads=[];
 try{
 let q=sb.from('clienti').select('*').order('created_at',{ascending:false});
-if(!_cva())q=q.eq('venditore_id',CU.id);
+if(!canViewAll())q=q.eq('venditore_id',CU.id);
 const{data}=await q;leads=data||[];
 }catch(e){}
 const totali={};STATI_LEAD.forEach(s=>totali[s]=0);
@@ -1666,13 +1668,13 @@ document.getElementById('content').innerHTML=`
 ${STATI_LEAD.map(s=>{const n=totali[s]||0;const perc=totLead>0?Math.round(n/totLead*100):0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:${STATO_TEXT[s]}">${s.split(' — ')[0]}</span><span style="font-size:12px;color:var(--text2)">${n} (${perc}%)</span></div><div style="height:8px;background:var(--gray2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${perc}%;background:${STATO_TEXT[s]};border-radius:4px"></div></div></div>`;}).join('')}
 </div>
 </div>
-${_id()?`<div class="full-card"><div class="card-head"><span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Performance per venditore</span></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Venditore</th><th>Totale</th><th>Vinte</th><th>Perse</th><th>In corso</th><th>Conv.%</th></tr></thead><tbody>${Object.entries(byVend).sort((a,b)=>b[1].vinte-a[1].vinte).map(([nome,s])=>`<tr><td style="font-weight:600">${nome}</td><td style="text-align:center">${s.totale}</td><td style="text-align:center;color:#166534;font-weight:600">${s.vinte}</td><td style="text-align:center;color:#991B1B">${s.perse}</td><td style="text-align:center;color:var(--orange)">${s.inCorso}</td><td style="text-align:center;font-weight:700">${s.totale>0?Math.round(s.vinte/s.totale*100):0}%</td></tr>`).join('')}</tbody></table></div></div>`:''}
+${isDir()?`<div class="full-card"><div class="card-head"><span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Performance per venditore</span></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Venditore</th><th>Totale</th><th>Vinte</th><th>Perse</th><th>In corso</th><th>Conv.%</th></tr></thead><tbody>${Object.entries(byVend).sort((a,b)=>b[1].vinte-a[1].vinte).map(([nome,s])=>`<tr><td style="font-weight:600">${nome}</td><td style="text-align:center">${s.totale}</td><td style="text-align:center;color:#166534;font-weight:600">${s.vinte}</td><td style="text-align:center;color:#991B1B">${s.perse}</td><td style="text-align:center;color:var(--orange)">${s.inCorso}</td><td style="text-align:center;font-weight:700">${s.totale>0?Math.round(s.vinte/s.totale*100):0}%</td></tr>`).join('')}</tbody></table></div></div>`:''}
 <div class="full-card">
 <div class="card-head">
 <span class="card-title"><i class="ti ti-list" style="color:var(--orange);margin-right:6px"></i>Tutte le lead — ${totLead} totali</span>
 <div style="display:flex;gap:7px;flex-wrap:wrap">
 <select id="rl-stato" class="btn btn-sm" style="cursor:pointer" onchange="filtroLead()"><option value="">Tutti gli stati</option>${STATI_LEAD.map(s=>`<option value="${s}">${s.split(' — ')[0]}</option>`).join('')}</select>
-${_id()?`<select id="rl-venditore" class="btn btn-sm" style="cursor:pointer" onchange="filtroLead()"><option value="">Tutti i venditori</option></select>`:''}
+${isDir()?`<select id="rl-venditore" class="btn btn-sm" style="cursor:pointer" onchange="filtroLead()"><option value="">Tutti i venditori</option></select>`:''}
 <input id="rl-dal" type="date" class="btn btn-sm" onchange="filtroLead()" title="Dal">
 <input id="rl-al" type="date" class="btn btn-sm" onchange="filtroLead()" title="Al">
 <button class="btn btn-sm" onclick="esportaLeadExcel()"><i class="ti ti-file-spreadsheet"></i> Excel</button>
@@ -1695,7 +1697,7 @@ const vend=document.getElementById('rl-venditore')?.value||'';
 const dal=document.getElementById('rl-dal')?.value||'';
 const al=document.getElementById('rl-al')?.value||'';
 let q=sb.from('clienti').select('*').order('created_at',{ascending:false});
-if(!_cva())q=q.eq('venditore_id',CU.id);
+if(!canViewAll())q=q.eq('venditore_id',CU.id);
 if(stato)q=q.eq('stato_lead',stato);
 if(vend)q=q.eq('venditore_id',parseInt(vend));
 if(dal)q=q.gte('created_at',dal);
@@ -1712,7 +1714,7 @@ const lid=l.id;const lnome=(l.nome||'').replace(/'/g,'');
 return`<div class="lead-card"><div class="lead-card-header"><div class="lead-card-name">${l.nome||'—'}</div><span class="lead-card-stato" style="background:${sc};color:${st2}">${slabel}</span></div><div class="lead-card-info"><i class="ti ti-user" style="color:var(--text3);margin-right:4px"></i>${l.venditore_nome||'—'}</div><div class="lead-card-info"><i class="ti ti-map-pin" style="color:var(--text3);margin-right:4px"></i>${l.citta||'—'}</div><div class="lead-card-info"><i class="ti ti-calendar" style="color:var(--text3);margin-right:4px"></i>${l.created_at?new Date(l.created_at).toLocaleDateString('it-IT'):'—'}</div><div class="lead-card-actions"><button class="btn btn-sm" onclick="cambiaStatoLead(${lid},this.dataset.s)" data-s="${sl}" style="flex:1;justify-content:center"><i class="ti ti-tag"></i> Stato</button><button class="btn btn-sm" onclick="window._currentTimelineClienteId=${lid};window._currentTimelineNome='${lnome}';openTimeline(${lid})" style="flex:1;justify-content:center"><i class="ti ti-timeline"></i> Timeline</button></div></div>`;
 }).join('')||'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna lead trovata</div>';
 }
-function esportaLeadExcel(){_st('Export lead - funzionalità disponibile');}
+function esportaLeadExcel(){showToast('Export lead - funzionalità disponibile');}
 function esportaLeadPdf(){window.print();}
 async function cambiaStatoLead(id, statoAttuale){
 window._cambiaStatoId=id;
@@ -1720,7 +1722,7 @@ if(typeof STATI_LEAD==='undefined')return;
 const sel=document.getElementById('cs-stato');
 if(sel){sel.innerHTML=STATI_LEAD.map(s=>`<option value="${s}" ${s===statoAttuale?'selected':''}>${s}</option>`).join('');toggleCambioStatoFields(sel.value);}
 const motEl=document.getElementById('cs-motivazione');if(motEl)motEl.value='';
-_om('modal-cambia-stato');
+openModal('modal-cambia-stato');
 }
 async function salvaCambioStato(){
 const id=window._cambiaStatoId;
@@ -1730,10 +1732,10 @@ const btn=document.getElementById('cs-save-btn');
 btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
 try{
 await sb.from('clienti').update({stato_lead:stato,stato:stato==='Vinta'?'Attivo':stato.includes('rifiutato')||stato.includes('concorrente')||stato.includes('rimandato')?'Perso':'Lead',note_chiusura:document.getElementById('cs-motivazione')?.value.trim()||null}).eq('id',id);
-_cm('modal-cambia-stato');
-_st('Stato aggiornato: '+stato.split(' — ')[0]);
-_rs('report-lead');
-}catch(e){_st('Errore: '+e.message);}
+closeModal('modal-cambia-stato');
+showToast('Stato aggiornato: '+stato.split(' — ')[0]);
+renderSec('report-lead');
+}catch(e){showToast('Errore: '+e.message);}
 btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva';
 }
 function toggleCambioStatoFields(stato){
@@ -1748,10 +1750,10 @@ await sb.from('lead_attivita').delete().eq('cliente_id',id);
 await sb.from('notifiche').delete().eq('lead_id',id);
 const{error}=await sb.from('clienti').delete().eq('id',id);
 if(error)throw error;
-_st('Lead eliminata!');
-if(_cs==='scheda'){_ac=null;_nt('clienti');}
-else _rs('clienti');
-}catch(e){_st('Errore: '+e.message);}
+showToast('Lead eliminata!');
+if(currentSec==='scheda'){activeClient=null;navTo('clienti');}
+else renderSec('clienti');
+}catch(e){showToast('Errore: '+e.message);}
 }
 function renderLeadCards(leads){
 const container=document.getElementById('rl-mobile-cards');
@@ -1797,23 +1799,23 @@ document.querySelectorAll('.dir-only').forEach(el=>el.style.display='flex');
 }
 document.getElementById('app').classList.add('vis');
 setupNav();
-_rs('dashboard');
+renderSec('dashboard');
 }
 function setupNav() {
 document.querySelectorAll('.ni').forEach(el=>{
 el.addEventListener('click',()=>{
 const sec=el.dataset.sec; if(!sec)return;
-if(sec==='lead'){_om('modal-lead');return;}
+if(sec==='lead'){openModal('modal-lead');return;}
 document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
 el.classList.add('active');
-_cs=sec;
+currentSec=sec;
 const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti','report-lead':'Report Lead',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
 document.getElementById('page-title').textContent=titles[sec]||sec;
-_rs(sec);
+renderSec(sec);
 });
 });
 }
-function _nt(sec) {
+function navTo(sec) {
 closeMobileMenu();
 document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
 document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1824,61 +1826,61 @@ if(bnav)bnav.classList.add('active');
 if(history.state?.sec !== sec) history.pushState({sec}, '', '#'+sec);
 const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti','report-lead':'Report Lead',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
 document.getElementById('page-title').textContent=titles[sec]||sec;
-_cs=sec;
-_rs(sec);
+currentSec=sec;
+renderSec(sec);
 }
-async function _rs(sec) {
+async function renderSec(sec) {
 const c=document.getElementById('content');
 c.innerHTML='<div class="spinner"></div>';
 const map={dashboard:rDash,clienti:rClienti,scheda:rScheda,veicoli:rVeicoli,trattative:rTrattative,report:rReport,contratti:rContratti,'report-lead':rReportLead,flotta:rFlotta,'dir-overview':rDirOverview,ai:rAI,agenda:rAgenda,attivita:rAttivita,utenti:rUtenti,impostazioni:rImpostazioni};
 if(map[sec])await map[sec]();
 if(sec==='ai'){setTimeout(()=>{const b=document.getElementById('ai-msgs');if(b)b.scrollTop=b.scrollHeight;},60);bindAI();}
 }
-function _id(){return CU.ruolo==='direzione'||CU.ruolo==='admin'||CU.ruolo==='cfo';}
-function _qc(){
+function isDir(){return CU.ruolo==='direzione'||CU.ruolo==='admin'||CU.ruolo==='cfo';}
+function queryClienti(){
 let q=sb.from('clienti').select('*').order('created_at',{ascending:false});
-if(!_id())q=q.eq('venditore_id',CU.id);
+if(!isDir())q=q.eq('venditore_id',CU.id);
 return q;
 }
-function _qt(){
+function queryTrattative(){
 let q=sb.from('trattative').select('*').order('created_at',{ascending:false});
-if(!_id())q=q.eq('venditore_id',CU.id);
+if(!isDir())q=q.eq('venditore_id',CU.id);
 return q;
 }
-function _bg(l,c){return`<span class="_bg ${c}">${l}</span>`;}
-function _pr(v,c){return`<div class="prog" style="flex:1"><div class="_pr-fill" style="width:${v}%;background:${c}"></div></div>`;}
-function _mv(i,bg='var(--navy)',fg='#fff'){return`<div class="mini-av" style="background:${bg};color:${fg}">${i}</div>`;}
-function _sb(s){const m={VIP:'bg-go',Attivo:'bg-g',Lead:'bg-o',Trattativa:'bg-n',Prospect:'bg-gr'};return _bg(s,m[s]||'bg-gr');}
-function _se(el,msg){el.textContent=msg;el.style.display='block';}
+function badge(l,c){return`<span class="badge ${c}">${l}</span>`;}
+function prog(v,c){return`<div class="prog" style="flex:1"><div class="prog-fill" style="width:${v}%;background:${c}"></div></div>`;}
+function mav(i,bg='var(--navy)',fg='#fff'){return`<div class="mini-av" style="background:${bg};color:${fg}">${i}</div>`;}
+function stBadge(s){const m={VIP:'bg-go',Attivo:'bg-g',Lead:'bg-o',Trattativa:'bg-n',Prospect:'bg-gr'};return badge(s,m[s]||'bg-gr');}
+function showErr(el,msg){el.textContent=msg;el.style.display='block';}
 function togglePwd(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.innerHTML=i.type==='password'?'<i class="ti ti-eye"></i>':'<i class="ti ti-eye-off"></i>';}
 async function rDash(){
 let cl=[],tr=[];
 try{
-const[r1,r2]=await Promise.all([_qc().limit(20),_qt().limit(10)]);
+const[r1,r2]=await Promise.all([queryClienti().limit(20),queryTrattative().limit(10)]);
 cl=r1.data||[];tr=r2.data||[];
 }catch(e){}
-const dirBanner = _id()?`<div style="background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px">
+const dirBanner = isDir()?`<div style="background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:10px">
 <i class="ti ti-eye" style="color:var(--gold);font-size:20px"></i>
 <div><div style="font-size:13px;font-weight:700;color:var(--gold)">Vista Direzione attiva</div><div style="font-size:12px;color:#854F0B">Stai visualizzando i dati di TUTTI i venditori. Clicca "Vista Direzione" nel menu per il pannello completo.</div></div>
-<button class="btn btn-sm" style="margin-left:auto;border-color:var(--gold);color:var(--gold);flex-shrink:0" onclick="_nt('dir-overview')"><i class="ti ti-arrow-right"></i> Apri</button>
+<button class="btn btn-sm" style="margin-left:auto;border-color:var(--gold);color:var(--gold);flex-shrink:0" onclick="navTo('dir-overview')"><i class="ti ti-arrow-right"></i> Apri</button>
 </div>`:'';
 document.getElementById('content').innerHTML=`
 ${dirBanner}
 <div class="kpi-g">
-<div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">${_id()?'Clienti totali':'Miei clienti'}</div><div class="kpi-v">${cl.length}</div><div class="kpi-d du">Database live</div></div>
-<div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">${_id()?'Trattative totali':'Mie trattative'}</div><div class="kpi-v">${tr.length}</div><div class="kpi-d du">Aggiornato ora</div></div>
+<div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">${isDir()?'Clienti totali':'Miei clienti'}</div><div class="kpi-v">${cl.length}</div><div class="kpi-d du">Database live</div></div>
+<div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">${isDir()?'Trattative totali':'Mie trattative'}</div><div class="kpi-v">${tr.length}</div><div class="kpi-d du">Aggiornato ora</div></div>
 <div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">In chiusura</div><div class="kpi-v">${tr.filter(t=>t.fase==='In chiusura').length}</div><div class="kpi-d du">Alta probabilità</div></div>
 <div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">Contratti inseriti</div><div class="kpi-v" id="kpi-contratti-dash">—</div><div class="kpi-d" style="color:var(--text3)">Database live</div></div>
 </div>
 <div class="row2">
 <div class="card">
-<div class="card-head"><span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Ultimi clienti</span><button class="btn btn-sm" onclick="_nt('clienti')">Tutti</button></div>
-<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Interesse</th>${_id()?'<th>Venditore</th>':''}<th>Stato</th></tr></thead><tbody>
+<div class="card-head"><span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Ultimi clienti</span><button class="btn btn-sm" onclick="navTo('clienti')">Tutti</button></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Interesse</th>${isDir()?'<th>Venditore</th>':''}<th>Stato</th></tr></thead><tbody>
 ${cl.slice(0,5).map(c=>`<tr onclick="openClient(${c.id})">
-<td><div style="display:flex;align-items:center;gap:8px">${_mv((c.nome||'').slice(0,2).toUpperCase())}<div><div style="font-weight:600">${c.nome}</div><div style="font-size:10.5px;color:var(--text3)">${c.email||''}</div></div></div></td>
+<td><div style="display:flex;align-items:center;gap:8px">${mav((c.nome||'').slice(0,2).toUpperCase())}<div><div style="font-weight:600">${c.nome}</div><div style="font-size:10.5px;color:var(--text3)">${c.email||''}</div></div></div></td>
 <td style="color:var(--text2)">${c.interesse||'—'}</td>
-${_id()?`<td style="font-size:11px;color:var(--text2)">${c.venditore_nome||'—'}</td>`:''}
-<td>${_sb(c.stato||'Lead')}</td>
+${isDir()?`<td style="font-size:11px;color:var(--text2)">${c.venditore_nome||'—'}</td>`:''}
+<td>${stBadge(c.stato||'Lead')}</td>
 </tr>`).join('')}
 </tbody></table></div>
 </div>
@@ -1888,8 +1890,8 @@ ${_id()?`<td style="font-size:11px;color:var(--text2)">${c.venditore_nome||'—'
 ${tr.slice(0,5).map(t=>`<tr>
 <td style="font-weight:600">${t.cliente_nome||'—'}</td>
 <td style="color:var(--navy);font-weight:700">${t.valore||'—'}</td>
-<td>${_bg(t.fase||'—',t.fase==='In chiusura'?'bg-go':t.fase==='Proposta'?'bg-o':'bg-gr')}</td>
-<td><div style="display:flex;align-items:center;gap:5px">${_pr(t.probabilita||0,'var(--orange)')}<span style="font-size:11px;font-weight:700">${t.probabilita||0}%</span></div></td>
+<td>${badge(t.fase||'—',t.fase==='In chiusura'?'bg-go':t.fase==='Proposta'?'bg-o':'bg-gr')}</td>
+<td><div style="display:flex;align-items:center;gap:5px">${prog(t.probabilita||0,'var(--orange)')}<span style="font-size:11px;font-weight:700">${t.probabilita||0}%</span></div></td>
 </tr>`).join('')}
 </tbody></table></div>
 </div>
@@ -1897,25 +1899,25 @@ ${tr.slice(0,5).map(t=>`<tr>
 }
 async function rClienti(){
 let data=[];
-try{const r=await _qc();data=r.data||[];}catch(e){}
+try{const r=await queryClienti();data=r.data||[];}catch(e){}
 document.getElementById('content').innerHTML=`
 <div class="full-card">
-<div class="card-head"><span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>${_id()?'Tutti i clienti':'I miei clienti'} — ${data.length}</span>
+<div class="card-head"><span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>${isDir()?'Tutti i clienti':'I miei clienti'} — ${data.length}</span>
 <button class="btn btn-sm btn-navy"><i class="ti ti-download"></i> Esporta</button>
 </div>
-<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Tipo</th><th>Telefono</th><th>Interesse</th><th>Score</th>${_id()?'<th>Venditore</th>':''}<th>Stato</th></tr></thead><tbody>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cliente</th><th>Tipo</th><th>Telefono</th><th>Interesse</th><th>Score</th>${isDir()?'<th>Venditore</th>':''}<th>Stato</th></tr></thead><tbody>
 ${data.map(c=>`<tr onclick="openClient(${c.id})">
-<td><div style="display:flex;align-items:center;gap:8px">${_mv((c.nome||'').slice(0,2).toUpperCase())}<div><div style="font-weight:600">${c.nome}</div><div style="font-size:10.5px;color:var(--text3)">${c.email||''}</div></div></div></td>
-<td>${_bg(c.tipo||'Privato',c.tipo==='Azienda'?'bg-n':'bg-gr')}</td>
+<td><div style="display:flex;align-items:center;gap:8px">${mav((c.nome||'').slice(0,2).toUpperCase())}<div><div style="font-weight:600">${c.nome}</div><div style="font-size:10.5px;color:var(--text3)">${c.email||''}</div></div></div></td>
+<td>${badge(c.tipo||'Privato',c.tipo==='Azienda'?'bg-n':'bg-gr')}</td>
 <td style="color:var(--text2)">${c.tel||'—'}</td>
 <td style="color:var(--text2)">${c.interesse||'—'}</td>
-<td><div style="display:flex;align-items:center;gap:6px">${_pr(c.score||0,'var(--orange)')}<span style="font-size:11px;font-weight:700;color:${(c.score||0)>80?'var(--navy)':'var(--orange)'}">${c.score||0}</span></div></td>
-${_id()?`<td><span style="font-size:11.5px;font-weight:600;color:var(--navy)">${c.venditore_nome||'—'}</span></td>`:''}
-<td>${_sb(c.stato_lead||c.stato||'Nuova')}</td>
+<td><div style="display:flex;align-items:center;gap:6px">${prog(c.score||0,'var(--orange)')}<span style="font-size:11px;font-weight:700;color:${(c.score||0)>80?'var(--navy)':'var(--orange)'}">${c.score||0}</span></div></td>
+${isDir()?`<td><span style="font-size:11.5px;font-weight:600;color:var(--navy)">${c.venditore_nome||'—'}</span></td>`:''}
+<td>${stBadge(c.stato_lead||c.stato||'Nuova')}</td>
 <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">
 <button class="btn btn-sm" onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineNome='${(c.nome||'').replace(/'/g,'')}';openTimeline(${c.id})" title="Timeline"><i class="ti ti-timeline"></i></button>
-${_ca()?`<button class="btn btn-sm" onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineVenditoreId=${c.venditore_id};openAssegna()" title="Riassegna"><i class="ti ti-user-check"></i></button>`:''}
-${_ca()?`<button class="btn btn-sm btn-red" onclick="event.stopPropagation();eliminaCliente(${c.id},'${(c.nome||'').replace(/'/g,'')}')"><i class="ti ti-trash"></i></button>`:''}
+${canAssign()?`<button class="btn btn-sm" onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineVenditoreId=${c.venditore_id};openAssegna()" title="Riassegna"><i class="ti ti-user-check"></i></button>`:''}
+${canAssign()?`<button class="btn btn-sm btn-red" onclick="event.stopPropagation();eliminaCliente(${c.id},'${(c.nome||'').replace(/'/g,'')}')"><i class="ti ti-trash"></i></button>`:''}
 </div></td>
 </tr>`).join('')}
 </tbody></table></div>
@@ -1924,10 +1926,10 @@ ${_ca()?`<button class="btn btn-sm btn-red" onclick="event.stopPropagation();eli
 async function openClient(id){
 let data=null;
 try{const r=await sb.from('clienti').select('*').eq('id',id).single();data=r.data;}catch(e){}
-_ac=data;_nt('scheda');
+activeClient=data;navTo('scheda');
 }
 async function rScheda(){
-const c=_ac;
+const c=activeClient;
 if(!c){document.getElementById('content').innerHTML='<div style="padding:30px;text-align:center;color:var(--text3)">Seleziona un cliente dalla lista</div>';return;}
 document.getElementById('content').innerHTML=`
 <div class="card">
@@ -1936,7 +1938,7 @@ document.getElementById('content').innerHTML=`
 <div style="flex:1">
 <div class="det-name">${c.nome}</div>
 <div class="det-sub">${c.tipo||''} · ${c.citta||''} · ${c.email||''}</div>
-<div class="det-badges">${_sb(c.stato||'Lead')}${_bg('Score: '+(c.score||0)+'/100','bg-n')}${_id()&&c.venditore_nome?_bg('👤 '+c.venditore_nome,'bg-gr'):''}</div>
+<div class="det-badges">${stBadge(c.stato||'Lead')}${badge('Score: '+(c.score||0)+'/100','bg-n')}${isDir()&&c.venditore_nome?badge('👤 '+c.venditore_nome,'bg-gr'):''}</div>
 </div>
 <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end">
 <button class="btn btn-sm"><i class="ti ti-phone"></i> Chiama</button>
@@ -1952,7 +1954,7 @@ ${c.stato==='Lead'?`<button class="btn btn-sm" style="background:var(--green-bg)
 <div class="df-label">Email</div><div class="df-val" style="color:var(--orange)">${c.email||'—'}</div>
 <div class="df-label">Città</div><div class="df-val">${c.citta||'—'}</div>
 <div class="df-label">Fonte</div><div class="df-val">${c.fonte||'—'}</div>
-${_id()?`<div class="df-label">Venditore assegnato</div><div class="df-val" style="font-weight:700;color:var(--navy)">${c.venditore_nome||'—'}</div>`:''}
+${isDir()?`<div class="df-label">Venditore assegnato</div><div class="df-val" style="font-weight:700;color:var(--navy)">${c.venditore_nome||'—'}</div>`:''}
 <div class="df-label">Valore lifetime</div><div class="df-val" style="font-size:20px;font-weight:700;color:var(--orange)">${c.valore_lifetime||'€ 0'}</div>
 </div>
 <div class="det-col">
@@ -1973,18 +1975,18 @@ try{const r=await sb.from('veicoli').select('*').order('created_at',{ascending:f
 document.getElementById('content').innerHTML=`
 <div class="full-card">
 <div class="card-head"><span class="card-title"><i class="ti ti-car" style="color:var(--orange);margin-right:6px"></i>Inventario veicoli — ${data.length} in stock</span>
-${_id()?`<button class="btn btn-sm btn-navy"><i class="ti ti-plus"></i> Aggiungi veicolo</button>`:''}
+${isDir()?`<button class="btn btn-sm btn-navy"><i class="ti ti-plus"></i> Aggiungi veicolo</button>`:''}
 </div>
 <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Veicolo</th><th>Categoria</th><th>Tipo</th><th>Anno</th><th>Km</th><th>Prezzo / Canone</th><th>Giorni stock</th><th>Stato</th></tr></thead><tbody>
 ${data.map(v=>`<tr>
 <td style="font-weight:600">${v.nome}</td>
-<td>${_bg(v.categoria||'—','bg-n')}</td>
-<td>${_bg(v.tipo||'—','bg-gr')}</td>
+<td>${badge(v.categoria||'—','bg-n')}</td>
+<td>${badge(v.tipo||'—','bg-gr')}</td>
 <td>${v.anno||'—'}</td>
 <td style="color:var(--text2)">${v.km===0?'—':(v.km||0).toLocaleString('it-IT')+' km'}</td>
 <td style="font-weight:700;color:var(--navy)">${v.prezzo||'—'}</td>
 <td style="font-weight:700;color:${(v.giorni_stock||0)>35?'#991B1B':(v.giorni_stock||0)>20?'var(--orange)':'var(--text)'}">${v.giorni_stock||0} gg</td>
-<td>${_bg(v.stato||'—',v.stato==='Disponibile'?'bg-g':v.stato==='Urgente'?'bg-r':'bg-o')}</td>
+<td>${badge(v.stato||'—',v.stato==='Disponibile'?'bg-g':v.stato==='Urgente'?'bg-r':'bg-o')}</td>
 </tr>`).join('')}
 </tbody></table></div>
 </div>`;
@@ -1993,7 +1995,7 @@ async function rReport(){
 let contratti=[];
 try{
 let q=sb.from('contratti_chiusi').select('*').order('mese',{ascending:false});
-if(!_id())q=q.eq('venditore_id',CU.id);
+if(!isDir())q=q.eq('venditore_id',CU.id);
 const{data}=await q;contratti=data||[];
 }catch(e){}
 const byMese={};
@@ -2064,17 +2066,17 @@ function toggleTipoVeicoloCustom(val){
 const grp=document.getElementById('c-tipo-veicolo-custom-grp');
 if(grp){grp.style.display=val==='altro'?'flex':'none';grp.style.flexDirection='column';grp.style.gap='4px';}
 }
-function _th(val){
+function toggleHorizon(val){
 const grp=document.getElementById('c-horizon-grp');
 if(grp){grp.style.display=val==='HORIZON AUTOMOTIVE'?'flex':'none';grp.style.flexDirection='column';grp.style.gap='4px';}
 if(val!=='HORIZON AUTOMOTIVE'){const s=document.getElementById('c-horizon-societa');if(s)s.value='';}
 }
-function _tcb(val){
+function toggleCampiBO(val){
 const isNLT=val==='NLT — Noleggio Lungo Termine';
 ['c-nbo-grp','c-data-bo-grp'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isNLT?'':'none';});
 if(!isNLT){const n=document.getElementById('c-nbo');const d=document.getElementById('c-data-bo');if(n){n.value='';n.style.borderColor='';n.style.boxShadow='';}if(d){d.value='';d.style.borderColor='';d.style.boxShadow='';}}
 }
-function _tcn(val){
+function toggleCampiNoleggio(val){
 const isAcquisto = val==='Acquisto diretto';
 const isLeasing = val==='Leasing';
 ['c-durata','c-data-inizio','c-data-fine'].forEach((id,i)=>{
@@ -2089,7 +2091,7 @@ if(selSoc&&(isAcquisto||isLeasing)&&!selSoc.value){
 selSoc.value='INTERMEDIAZIONE VENDITA';
 }
 }
-function _calc(){
+function calcolaMargini(){
 const margine=parseFloat(document.getElementById('c-margine')?.value)||0;
 const bonus=parseFloat(document.getElementById('c-bonus')?.value)||0;
 const pezzi=parseInt(document.getElementById('c-pezzi')?.value)||1;
@@ -2113,7 +2115,7 @@ if(elProvv)elProvv.textContent='- € '+fmt(Math.abs(provvigioni));
 if(elNetto){elNetto.textContent='€ '+fmt(netto);elNetto.style.color=netto>=0?'var(--green)':'var(--red)';}
 if(elProvvInput)elProvvInput.value=provvigioni.toFixed(2);
 }
-function _fm(m){
+function formatMese(m){
 if(!m)return'—';
 const[y,mo]=m.split('-');
 const nomi=['','Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
@@ -2123,7 +2125,7 @@ async function rContratti(){
 let contratti=[];
 try{
 let q=sb.from('contratti_chiusi').select('*').order('created_at',{ascending:false});
-if(!_id())q=q.eq('venditore_id',CU.id);
+if(!isDir())q=q.eq('venditore_id',CU.id);
 const r=await q;contratti=r.data||[];
 }catch(e){}
 const meseCorrente=new Date().toISOString().slice(0,7);
@@ -2147,15 +2149,15 @@ document.getElementById('content').innerHTML=`
 </div>
 <div class="full-card">
 <div class="card-head">
-<span class="card-title"><i class="ti ti-file-invoice" style="color:var(--orange);margin-right:6px"></i>Contratti chiusi${_id()?' — tutti i consulenti':' — '+CU.nome}</span>
+<span class="card-title"><i class="ti ti-file-invoice" style="color:var(--orange);margin-right:6px"></i>Contratti chiusi${isDir()?' — tutti i consulenti':' — '+CU.nome}</span>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <select id="filtro-mese" class="btn btn-sm" style="cursor:pointer" onchange="filtraContratti()">
 <option value="">Tutti i mesi</option>
-${mesiDisp.map(m=>`<option value="${m}">${_fm(m)}</option>`).join('')}
+${mesiDisp.map(m=>`<option value="${m}">${formatMese(m)}</option>`).join('')}
 </select>
-${_id()?`<select id="filtro-venditore" class="btn btn-sm" style="cursor:pointer" onchange="filtraContratti()"><option value="">Tutti i consulenti</option></select>`:''}
+${isDir()?`<select id="filtro-venditore" class="btn btn-sm" style="cursor:pointer" onchange="filtraContratti()"><option value="">Tutti i consulenti</option></select>`:''}
 <button class="btn btn-sm" onclick="esportaExcel()"><i class="ti ti-file-spreadsheet"></i> Scarica Excel</button>
-<button class="btn btn-sm btn-orange" onclick="_om('modal-contratto')"><i class="ti ti-plus"></i> Nuovo contratto</button>
+<button class="btn btn-sm btn-orange" onclick="openModal('modal-contratto')"><i class="ti ti-plus"></i> Nuovo contratto</button>
 </div>
 </div>
 ${mesiOrdinati.length===0?`<div style="padding:40px;text-align:center;color:var(--text3)">Nessun contratto. Clicca "+ Nuovo contratto".</div>`:''}
@@ -2163,7 +2165,7 @@ ${mesiOrdinati.map(mese=>{
 const m=mesi[mese];
 return `<div style="border-bottom:2px solid var(--border)">
 <div style="padding:12px 18px;background:var(--gray);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-<div style="font-size:13px;font-weight:700;color:var(--navy)">${_fm(mese)}</div>
+<div style="font-size:13px;font-weight:700;color:var(--navy)">${formatMese(mese)}</div>
 <div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">
 <span><strong>${m.contratti.length}</strong> contratti</span>
 <span><strong>${m.totPezzi}</strong> pezzi</span>
@@ -2176,7 +2178,7 @@ return `<div style="border-bottom:2px solid var(--border)">
 <th>Prodotto</th><th>Veicolo</th><th>Tipo Veicolo</th><th>Pezzi</th>
 <th>Margine Unit.</th><th>Bonus</th><th>Lordo</th><th>Segnalatore</th>
 <th>Segnal.€</th><th>Altri costi</th><th>Provvig.</th><th>Netto</th>
-${_id()?`<th>Partner</th>`:''}
+${isDir()?`<th>Partner</th>`:''}
 <th>PDF</th><th>Azioni</th>
 </tr></thead>
 <tbody>
@@ -2198,7 +2200,7 @@ ${m.contratti.map(c=>`<tr>
 <td style="color:var(--red)">${c.altri_costi?`€ ${parseFloat(c.altri_costi).toLocaleString('it-IT')}`:'—'}</td>
 <td style="color:var(--red)">${c.provvigioni?`€ ${parseFloat(c.provvigioni).toLocaleString('it-IT')}`:'—'}</td>
 <td style="font-weight:700;color:${(parseFloat(c.margine_netto)||0)>=0?'var(--green)':'var(--red)'}">€ ${(parseFloat(c.margine_netto)||0).toLocaleString('it-IT')}</td>
-${_id()?`<td style="font-size:11px">${c.partner||'—'}</td>`:''}
+${isDir()?`<td style="font-size:11px">${c.partner||'—'}</td>`:''}
 <td>${(()=>{try{const pdfs=c.pdf_urls?JSON.parse(c.pdf_urls):c.pdf_url?[{nome:'PDF',url:c.pdf_url}]:[];if(!pdfs.length)return'—';return pdfs.map((p,i)=>`<a href="${p.url}" target="_blank" class="btn btn-sm" style="padding:2px 6px;font-size:10px"><i class="ti ti-file-type-pdf"></i></a>`).join('');}catch(e){return c.pdf_url?`<a href="${c.pdf_url}" target="_blank" class="btn btn-sm" style="padding:2px 6px;font-size:10px"><i class="ti ti-file-type-pdf"></i></a>`:'—';}})()}</td>
 <td><div style="display:flex;gap:3px">
 <button class="btn btn-sm" style="padding:3px 7px;font-size:10px" onclick="modificaContratto(${c.id})"><i class="ti ti-edit"></i></button>
@@ -2210,18 +2212,18 @@ ${_id()?`<td style="font-size:11px">${c.partner||'—'}</td>`:''}
 </div>`;
 }).join('')}
 </div>`;
-if(_id())setTimeout(async()=>{
+if(isDir())setTimeout(async()=>{
 const sel=document.getElementById('filtro-venditore');if(!sel)return;
 try{const{data}=await sb.from('crm_utenti').select('id,nome').eq('attivo',true).order('nome');
 if(data)data.filter(u=>u.ruolo==='venditore').forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.nome;sel.appendChild(o);});}catch(e){}
 },200);
 }
-async function filtraContratti(){_rs('contratti');}
+async function filtraContratti(){renderSec('contratti');}
 async function modificaContratto(id){
 try{
 const{data}=await sb.from('contratti_chiusi').select('*').eq('id',id).single();
 if(!data)return;
-_om('modal-contratto');
+openModal('modal-contratto');
 setTimeout(()=>{
 document.getElementById('c-mese').value=data.mese||'';
 document.getElementById('c-data-firma').value=data.data_firma||'';
@@ -2245,16 +2247,16 @@ document.getElementById('c-tipo-veicolo').value=data.tipo_veicolo||'';
 document.getElementById('c-durata').value=data.durata_noleggio||'';
 document.getElementById('c-data-inizio').value=data.data_inizio||'';
 document.getElementById('c-data-fine').value=data.data_fine||'';
-_calc();
+calcolaMargini();
 document.getElementById('save-contratto-btn').dataset.editId=id;
 document.getElementById('save-contratto-btn').innerHTML='<i class="ti ti-check"></i> Aggiorna contratto';
 },100);
-}catch(e){_st('Errore: '+e.message);}
+}catch(e){showToast('Errore: '+e.message);}
 }
 async function eliminaContratto(id){
 if(!confirm('Eliminare questo contratto?'))return;
-try{await sb.from('contratti_chiusi').delete().eq('id',id);_st('Contratto eliminato');_rs('contratti');}
-catch(e){_st('Errore: '+e.message);}
+try{await sb.from('contratti_chiusi').delete().eq('id',id);showToast('Contratto eliminato');renderSec('contratti');}
+catch(e){showToast('Errore: '+e.message);}
 }
 async function eliminaPdf(contratoId,pdfIndex){
 if(!confirm('Eliminare questo PDF?'))return;
@@ -2263,8 +2265,8 @@ const{data}=await sb.from('contratti_chiusi').select('pdf_urls').eq('id',contrat
 let pdfs=[];try{pdfs=JSON.parse(data.pdf_urls||'[]');}catch(e){}
 pdfs.splice(pdfIndex,1);
 await sb.from('contratti_chiusi').update({pdf_urls:pdfs.length>0?JSON.stringify(pdfs):null}).eq('id',contratoId);
-_st('PDF eliminato!');_rs('contratti');
-}catch(e){_st('Errore: '+e.message);}
+showToast('PDF eliminato!');renderSec('contratti');
+}catch(e){showToast('Errore: '+e.message);}
 }
 async function esportaExcel(){
 let contratti=[];
@@ -2272,12 +2274,12 @@ const filtroMese=document.getElementById('filtro-mese')?.value||'';
 const filtroVend=document.getElementById('filtro-venditore')?.value||'';
 try{
 let q=sb.from('contratti_chiusi').select('*').order('mese',{ascending:false});
-if(!_id())q=q.eq('venditore_id',CU.id);
+if(!isDir())q=q.eq('venditore_id',CU.id);
 if(filtroMese)q=q.eq('mese',filtroMese);
 if(filtroVend)q=q.eq('venditore_id',parseInt(filtroVend));
 const{data}=await q;contratti=data||[];
-}catch(e){_st('Errore caricamento dati');return;}
-if(!contratti.length){_st('Nessun contratto da esportare');return;}
+}catch(e){showToast('Errore caricamento dati');return;}
+if(!contratti.length){showToast('Nessun contratto da esportare');return;}
 const headers=['Mese','Data contratto firmato','N° BO','Data BO','Consulente',
 'Partner di fatturazione','Società di noleggio','Nominativo Cliente','Città',
 'Provenienza','Prodotto','Durata noleggio in mesi','Data inizio noleggio',
@@ -2321,7 +2323,7 @@ c.pezzi_segnalazione||0,
 c.collega||'',
 c.note||''
 ].map(esc).join(sep);
-if(_id()&&!filtroVend){
+if(isDir()&&!filtroVend){
 const byVend={};
 contratti.forEach(c=>{
 const v=c.venditore_nome||'Sconosciuto';
@@ -2371,7 +2373,7 @@ const a=document.createElement('a');
 a.href=url;
 a.download='Report_Contratti_Team_'+new Date().toISOString().slice(0,10)+'.csv';
 a.click();URL.revokeObjectURL(url);
-_st('Excel esportato — '+venditori.length+' consulenti!');
+showToast('Excel esportato — '+venditori.length+' consulenti!');
 } else {
 const rows=contratti.map(toRow);
 const totPezzi=contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
@@ -2390,7 +2392,7 @@ const a=document.createElement('a');
 a.href=url;
 a.download='Report_Contratti_'+CU.nome.replace(/ /g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv';
 a.click();URL.revokeObjectURL(url);
-_st('Excel esportato!');
+showToast('Excel esportato!');
 }
 }
 async function salvaContratto(){
@@ -2432,7 +2434,7 @@ const isAcquistoDir=prodotto_tipo==='Acquisto diretto';
 const fieldMap={'Mese':'c-mese','Data contratto firmato':'c-data-firma','N° BO':'c-nbo','Data BO':'c-data-bo','Cliente':'c-cliente','Provenienza':'c-provenienza','Tipo prodotto':'c-prodotto-tipo','Partner di fatturazione':'c-partner','Società Horizon':'c-horizon-societa','Società di noleggio':'c-societa-noleggio','Tipo veicolo':'c-tipo-veicolo',...(isAcquistoDir?{}:{'Durata noleggio':'c-durata','Data inizio':'c-data-inizio','Data fine':'c-data-fine'}),'Veicolo':'c-veicolo','N° pezzi':'c-pezzi','Margine unitario':'c-margine'};
 Object.values(fieldMap).forEach(id=>{const el=document.getElementById(id);if(el){el.style.borderColor='';el.style.boxShadow='';}});
 missing.forEach(name=>{const id=fieldMap[name];if(id){const el=document.getElementById(id);if(el){el.style.borderColor='#E53935';el.style.boxShadow='0 0 0 3px rgba(229,57,53,.2)';}}});
-if(missing.length>0){_se(err,'⚠️ Campi mancanti: '+missing.join(', '));btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;}
+if(missing.length>0){showErr(err,'⚠️ Campi mancanti: '+missing.join(', '));btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;}
 const margineNum=parseFloat(margine)||0;
 const bonusNum=parseFloat(document.getElementById('c-bonus')?.value)||0;
 const pezziNum=parseInt(pezzi)||1;
@@ -2453,14 +2455,14 @@ else if(partner==='ALTRO'){const alt=document.getElementById('c-partner-altro')?
 const pdfFiles=Array.from(document.getElementById('c-pdf')?.files||[]);
 let pdfUrls=[];
 for(const pdfFile of pdfFiles){
-if(pdfFile.size>20*1024*1024){_se(err,pdfFile.name+' supera 20MB.');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;}
+if(pdfFile.size>20*1024*1024){showErr(err,pdfFile.name+' supera 20MB.');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;}
 try{
 const fname=`${Date.now()}_${Math.random().toString(36).slice(2)}_${pdfFile.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
 const sbUrl=localStorage.getItem('p_url');const sbKey=localStorage.getItem('p_key');
 const uploadRes=await fetch(`${sbUrl}/storage/v1/object/contratti-pdf/${fname}`,{method:'POST',headers:{'Authorization':`Bearer ${sbKey}`,'apikey':sbKey,'Content-Type':pdfFile.type||'application/octet-stream','x-upsert':'true'},body:pdfFile});
 if(!uploadRes.ok)throw new Error('Upload fallito');
 pdfUrls.push({nome:pdfFile.name,url:`${sbUrl}/storage/v1/object/public/contratti-pdf/${fname}`});
-}catch(e){_se(err,'Errore upload PDF: '+e.message);btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;}
+}catch(e){showErr(err,'Errore upload PDF: '+e.message);btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';return;}
 }
 const payload={
 mese,cliente,data_firma:dataFirma||null,nbo:nbo||null,data_bo:dataBo||null,
@@ -2484,22 +2486,22 @@ try{
 const editId=document.getElementById('save-contratto-btn').dataset.editId;
 if(editId){const{error}=await sb.from('contratti_chiusi').update(payload).eq('id',parseInt(editId));if(error)throw error;delete document.getElementById('save-contratto-btn').dataset.editId;}
 else{const{error}=await sb.from('contratti_chiusi').insert(payload);if(error)throw error;}
-_cm('modal-contratto');
-_st('Contratto salvato!');
+closeModal('modal-contratto');
+showToast('Contratto salvato!');
 ['c-cliente','c-citta','c-veicolo','c-margine','c-bonus','c-segnalazione','c-altri-costi','c-segnalatore','c-note','c-nbo','c-data-firma','c-data-bo','c-durata','c-data-inizio','c-data-fine','c-provvigioni'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 document.getElementById('save-contratto-btn').innerHTML='<i class="ti ti-check"></i> Salva contratto';
-_rs('contratti');
-}catch(e){_se(err,'Errore: '+e.message);}
+renderSec('contratti');
+}catch(e){showErr(err,'Errore: '+e.message);}
 btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva contratto';
 }
 async function rFlotta(){
 let clienti=[],veicoli=[];
 try{
 let qc=sb.from('clienti').select('*').order('nome');
-if(!_id())qc=qc.eq('venditore_id',CU.id);
+if(!isDir())qc=qc.eq('venditore_id',CU.id);
 clienti=(await qc).data||[];
 let qv=sb.from('flotta_veicoli').select('*').order('data_scadenza');
-if(!_id())qv=qv.eq('venditore_id',CU.id);
+if(!isDir())qv=qv.eq('venditore_id',CU.id);
 veicoli=(await qv).data||[];
 }catch(e){}
 const oggi=new Date();
@@ -2519,41 +2521,41 @@ ${urgenti.length>0?`<div style="background:var(--red-bg);border:1px solid #F0959
 <div class="full-card">
 <div class="card-head">
 <span class="card-title"><i class="ti ti-calendar-event" style="color:var(--orange);margin-right:6px"></i>Scadenze — prossimi 4 mesi</span>
-<button class="btn btn-sm btn-orange" onclick="_om('modal-veicolo')"><i class="ti ti-plus"></i> Aggiungi veicolo</button>
+<button class="btn btn-sm btn-orange" onclick="openModal('modal-veicolo')"><i class="ti ti-plus"></i> Aggiungi veicolo</button>
 </div>
 ${scadenze.length===0?`<div style="padding:40px;text-align:center;color:var(--text3)">Nessuna scadenza nei prossimi 4 mesi.</div>`:''}
 <div class="tbl-wrap"><table class="tbl"><thead><tr>
-<th>Cliente</th><th>Modello</th><th>Targa</th><th>Categoria</th><th>Contratto</th><th>Scadenza</th><th>Giorni</th>${_id()?'<th>Consulente</th>':''}
+<th>Cliente</th><th>Modello</th><th>Targa</th><th>Categoria</th><th>Contratto</th><th>Scadenza</th><th>Giorni</th>${isDir()?'<th>Consulente</th>':''}
 </tr></thead><tbody>
 ${scadenze.map(v=>`<tr>
 <td style="font-weight:600">${v.cliente_nome||'—'}</td>
 <td>${v.modello||'—'}</td>
 <td><span style="font-family:monospace;font-size:11px;background:var(--gray);padding:2px 7px;border-radius:4px">${v.targa||'—'}</span></td>
-<td>${_bg(v.categoria||'—','bg-n')}</td>
-<td>${_bg(v.tipo_contratto||'—','bg-gr')}</td>
+<td>${badge(v.categoria||'—','bg-n')}</td>
+<td>${badge(v.tipo_contratto||'—','bg-gr')}</td>
 <td style="font-weight:600">${fData(v.data_scadenza)}</td>
 <td><span style="color:${gg(v.data_scadenza)<=30?'#991B1B':gg(v.data_scadenza)<=60?'var(--orange)':'var(--green)'};font-weight:600">${gg(v.data_scadenza)} gg</span></td>
-${_id()?`<td style="font-size:11.5px">${v.venditore_nome||'—'}</td>`:''}
+${isDir()?`<td style="font-size:11.5px">${v.venditore_nome||'—'}</td>`:''}
 </tr>`).join('')}
 </tbody></table></div>
 </div>
 <div class="full-card">
 <div class="card-head">
 <span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Clienti & flotta</span>
-<button class="btn btn-sm btn-navy" onclick="_om('modal-nuovo-cliente-flotta')"><i class="ti ti-user-plus"></i> Nuovo cliente</button>
+<button class="btn btn-sm btn-navy" onclick="openModal('modal-nuovo-cliente-flotta')"><i class="ti ti-user-plus"></i> Nuovo cliente</button>
 </div>
 <div class="tbl-wrap"><table class="tbl"><thead><tr>
-<th>Cliente</th><th>Città</th><th>Tipo</th><th>Veicoli</th>${_id()?'<th>Consulente</th>':''}<th>Stato</th><th>Azioni</th>
+<th>Cliente</th><th>Città</th><th>Tipo</th><th>Veicoli</th>${isDir()?'<th>Consulente</th>':''}<th>Stato</th><th>Azioni</th>
 </tr></thead><tbody>
 ${clienti.map(c=>{
 const cv=veicoli.filter(v=>v.cliente_id===c.id);
 return`<tr onclick="openClient(${c.id})">
-<td><div style="display:flex;align-items:center;gap:8px">${_mv((c.nome||'').slice(0,2).toUpperCase())}<div style="font-weight:600">${c.nome}</div></div></td>
+<td><div style="display:flex;align-items:center;gap:8px">${mav((c.nome||'').slice(0,2).toUpperCase())}<div style="font-weight:600">${c.nome}</div></div></td>
 <td>${c.citta||'—'}</td>
-<td>${_bg(c.tipo||'Privato',c.tipo==='Azienda'?'bg-n':'bg-gr')}</td>
+<td>${badge(c.tipo||'Privato',c.tipo==='Azienda'?'bg-n':'bg-gr')}</td>
 <td style="font-weight:600">${cv.length}</td>
-${_id()?`<td style="font-size:11.5px">${c.venditore_nome||'—'}</td>`:''}
-<td>${_sb(c.stato||'Lead')}</td>
+${isDir()?`<td style="font-size:11.5px">${c.venditore_nome||'—'}</td>`:''}
+<td>${stBadge(c.stato||'Lead')}</td>
 <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">
 <button class="btn btn-sm" onclick="window._currentTimelineClienteId=${c.id};window._currentTimelineNome='${(c.nome||'').replace(/'/g,'')}';openTimeline(${c.id})"><i class="ti ti-timeline"></i></button>
 </div></td>
@@ -2563,7 +2565,7 @@ ${_id()?`<td style="font-size:11.5px">${c.venditore_nome||'—'}</td>`:''}
 </div>`;
 }
 async function rDirOverview(){
-if(!_id()){document.getElementById('content').innerHTML='<div style="padding:30px;text-align:center;color:var(--red)">Accesso riservato.</div>';return;}
+if(!isDir()){document.getElementById('content').innerHTML='<div style="padding:30px;text-align:center;color:var(--red)">Accesso riservato.</div>';return;}
 let utenti=[],clienti=[],contratti=[];
 try{
 const[r1,r2,r3]=await Promise.all([
@@ -2597,7 +2599,7 @@ document.getElementById('content').innerHTML=`
 <div class="full-card">
 <div class="card-head">
 <span class="card-title"><i class="ti ti-users" style="color:var(--orange);margin-right:6px"></i>Performance team — real time</span>
-<button class="btn btn-sm" onclick="_rs('dir-overview')"><i class="ti ti-refresh"></i> Aggiorna</button>
+<button class="btn btn-sm" onclick="renderSec('dir-overview')"><i class="ti ti-refresh"></i> Aggiorna</button>
 </div>
 <div class="tbl-wrap"><table class="tbl">
 <thead><tr><th>Consulente</th><th>Ruolo</th><th>Clienti</th><th>Lead attive</th><th>Pezzi mese</th><th>Margine mese</th><th>Pezzi totali</th><th>Margine totale</th></tr></thead>
@@ -2640,7 +2642,7 @@ async function rTrattative(){
 let data=[];
 try{
 let q=sb.from('trattative').select('*').order('created_at',{ascending:false});
-if(!_cva())q=q.eq('venditore_id',CU.id);
+if(!canViewAll())q=q.eq('venditore_id',CU.id);
 const r=await q;data=r.data||[];
 }catch(e){console.log('Trattative:',e.message);}
 const fasi=['In lavorazione','Preventivo inviato','In chiusura','Vinta','Persa'];
@@ -2657,14 +2659,14 @@ document.getElementById('content').innerHTML=`
 </div>
 <div class="full-card">
 <div class="card-head">
-<span class="card-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:6px"></i>${_cva()?'Tutte le trattative — team':'Le mie trattative'} — ${data.length}</span>
+<span class="card-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:6px"></i>${canViewAll()?'Tutte le trattative — team':'Le mie trattative'} — ${data.length}</span>
 <div style="display:flex;gap:7px;flex-wrap:wrap">
 <select id="tr-fase" class="btn btn-sm" style="cursor:pointer" onchange="filtroTrattative()">
 <option value="">Tutte le fasi</option>
 ${fasi.map(f=>`<option value="${f}">${f}</option>`).join('')}
 </select>
-${_cva()?`<select id="tr-vend" class="btn btn-sm" style="cursor:pointer" onchange="filtroTrattative()"><option value="">Tutti i consulenti</option></select>`:''}
-<button class="btn btn-sm btn-orange" onclick="_om('modal-trattativa')"><i class="ti ti-plus"></i> Nuova trattativa</button>
+${canViewAll()?`<select id="tr-vend" class="btn btn-sm" style="cursor:pointer" onchange="filtroTrattative()"><option value="">Tutti i consulenti</option></select>`:''}
+<button class="btn btn-sm btn-orange" onclick="openModal('modal-trattativa')"><i class="ti ti-plus"></i> Nuova trattativa</button>
 </div>
 </div>
 <div id="tr-container" style="padding:8px">
@@ -2679,10 +2681,10 @@ return`<div style="background:#fff;border:1px solid var(--border);border-radius:
 <div style="font-size:12px;color:var(--text2);margin-top:2px">${t.citta||''} ${t.citta&&t.tipo?'·':''} ${t.tipo||''}</div>
 </div>
 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-${_bg(f,fasiColors[f]||'bg-gr')}
+${badge(f,fasiColors[f]||'bg-gr')}
 <div style="display:flex;gap:4px">
 <button class="btn btn-sm" onclick="apriTimelineTrattativa(${lid},'${lnome}')" title="Timeline"><i class="ti ti-timeline"></i></button>
-${(_cva()||t.venditore_id===CU.id)?`<button class="btn btn-sm" onclick="modificaTrattativa(${lid})" title="Modifica"><i class="ti ti-edit"></i></button>`:''}
+${(canViewAll()||t.venditore_id===CU.id)?`<button class="btn btn-sm" onclick="modificaTrattativa(${lid})" title="Modifica"><i class="ti ti-edit"></i></button>`:''}
 </div>
 </div>
 </div>
@@ -2709,7 +2711,7 @@ async function filtroTrattative(){
 const fase=document.getElementById('tr-fase')?.value||'';
 const vend=document.getElementById('tr-vend')?.value||'';
 let q=sb.from('trattative').select('*').order('created_at',{ascending:false});
-if(!_cva())q=q.eq('venditore_id',CU.id);
+if(!canViewAll())q=q.eq('venditore_id',CU.id);
 if(fase)q=q.eq('fase',fase);
 if(vend)q=q.eq('venditore_id',parseInt(vend));
 const{data}=await q;const trats=data||[];
@@ -2723,9 +2725,9 @@ return`<div style="background:#fff;border:1px solid var(--border);border-radius:
 <div><div style="font-size:14px;font-weight:700;color:var(--navy)">${t.cliente_nome||'—'}</div>
 <div style="font-size:12px;color:var(--text2)">${t.citta||''} ${t.venditore_nome?'· '+t.venditore_nome:''}</div></div>
 <div style="display:flex;gap:6px;align-items:center">
-${_bg(f,fasiColors[f]||'bg-gr')}
+${badge(f,fasiColors[f]||'bg-gr')}
 <button class="btn btn-sm" onclick="apriTimelineTrattativa(${lid},'${lnome}')"><i class="ti ti-timeline"></i></button>
-${(_cva()||t.venditore_id===CU.id)?`<button class="btn btn-sm" onclick="modificaTrattativa(${lid})"><i class="ti ti-edit"></i></button>`:''}
+${(canViewAll()||t.venditore_id===CU.id)?`<button class="btn btn-sm" onclick="modificaTrattativa(${lid})"><i class="ti ti-edit"></i></button>`:''}
 </div>
 </div>
 ${t.prodotto||t.veicolo||t.valore_stimato?`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">
@@ -2740,8 +2742,8 @@ ${t.note?`<div style="font-size:12px;color:var(--text2);background:var(--gray);b
 async function modificaTrattativa(id){
 try{
 const{data,error}=await sb.from('trattative').select('*').eq('id',id).single();
-if(error||!data){_st('Errore caricamento trattativa');return;}
-_om('modal-trattativa');
+if(error||!data){showToast('Errore caricamento trattativa');return;}
+openModal('modal-trattativa');
 setTimeout(()=>{
 document.getElementById('tr-cliente').value=data.cliente_nome||'';
 document.getElementById('tr-citta').value=data.citta||'';
@@ -2759,13 +2761,13 @@ document.getElementById('tr-note').value=data.note||'';
 document.getElementById('save-trattativa-btn').dataset.editId=id;
 document.getElementById('save-trattativa-btn').innerHTML='<i class="ti ti-check"></i> Aggiorna trattativa';
 },100);
-}catch(e){_st('Errore: '+e.message);}
+}catch(e){showToast('Errore: '+e.message);}
 }
 async function salvaTrattativa(){
 const btn=document.getElementById('save-trattativa-btn');
 btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
 const cliente=document.getElementById('tr-cliente')?.value.trim();
-if(!cliente){_st('Inserisci il nome del cliente');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva trattativa';return;}
+if(!cliente){showToast('Inserisci il nome del cliente');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva trattativa';return;}
 const payload={
 cliente_nome:cliente,
 citta:document.getElementById('tr-citta')?.value.trim()||null,
@@ -2790,21 +2792,21 @@ if(editId){
 const{error}=await sb.from('trattative').update(payload).eq('id',parseInt(editId));
 if(error)throw error;
 delete document.getElementById('save-trattativa-btn').dataset.editId;
-_st('Trattativa aggiornata!');
+showToast('Trattativa aggiornata!');
 } else {
 const{error}=await sb.from('trattative').insert(payload);
 if(error)throw error;
-_st('Trattativa salvata!');
+showToast('Trattativa salvata!');
 }
-_cm('modal-trattativa');
-_rs('trattative');
-}catch(e){_st('Errore: '+e.message);}
+closeModal('modal-trattativa');
+renderSec('trattative');
+}catch(e){showToast('Errore: '+e.message);}
 btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva trattativa';
 }
 async function apriTimelineTrattativa(id, nome){
 window._trattativaId=id;
 window._trattativaNome=nome;
-_om('modal-timeline-trattativa');
+openModal('modal-timeline-trattativa');
 const content=document.getElementById('trt-content');
 content.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Caricamento...</div>';
 document.getElementById('trt-title').textContent='Timeline: '+nome;
@@ -2831,7 +2833,7 @@ ${a.risposta_cliente?`<div style="margin-top:6px;background:#fff;border-radius:6
 async function salvaTlTrattativa(){
 const tipo=document.getElementById('trt-tipo')?.value;
 const desc=document.getElementById('trt-desc')?.value.trim();
-if(!tipo||!desc){_st('Compila tipo e descrizione');return;}
+if(!tipo||!desc){showToast('Compila tipo e descrizione');return;}
 const btn=document.getElementById('trt-save-btn');
 btn.disabled=true;
 try{
@@ -2839,9 +2841,9 @@ await sb.from('trattative_attivita').insert({trattativa_id:window._trattativaId,
 document.getElementById('trt-tipo').value='';
 document.getElementById('trt-desc').value='';
 document.getElementById('trt-risposta').value='';
-_st('Attività salvata!');
+showToast('Attività salvata!');
 apriTimelineTrattativa(window._trattativaId,window._trattativaNome);
-}catch(e){_st('Errore: '+e.message);}
+}catch(e){showToast('Errore: '+e.message);}
 btn.disabled=false;
 }
 (function(){
@@ -2862,10 +2864,11 @@ if(bnav)bnav.classList.add('active');
 const titles={dashboard:'Dashboard',clienti:'Clienti',scheda:'Scheda cliente',veicoli:'Veicoli',trattative:'Trattative',report:'Report & KPI',contratti:'Report Contratti','report-lead':'Report Lead',flotta:'Flotta & Scadenze','dir-overview':'Vista Direzione',ai:'AI Assistant',agenda:'Agenda',attivita:'Attività',utenti:'Gestione utenti',impostazioni:'Impostazioni'};
 const ptEl=document.getElementById('page-title');
 if(ptEl)ptEl.textContent=titles[e.state.sec]||e.state.sec;
-_cs=e.state.sec;
-_rs(e.state.sec);
+currentSec=e.state.sec;
+renderSec(e.state.sec);
 }
 });
+
 </script>
 </body>
 </html>
