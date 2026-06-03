@@ -834,7 +834,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
           <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);padding:0 12px">
             <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Provvigioni consulente</div>
             <div id="c-calc-provv" style="font-size:18px;font-weight:800;color:var(--red)">- € 0,00</div>
-            <div style="font-size:10px;color:var(--text3)">50% del Margine Totale Lordo</div>
+            <div style="font-size:10px;color:var(--text3)">20% del Margine Totale Lordo</div>
           </div>
           <div style="text-align:center">
             <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Margine Netto</div>
@@ -2120,7 +2120,7 @@ if(hiddenAltri)hiddenAltri.value=altriCosti.toFixed(2);
 const elAltriTot=document.getElementById('c-calc-altri-tot');
 if(elAltriTot)elAltriTot.textContent='- € '+(Math.abs(altriCosti)).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
 const lordo=(margine*pezzi)+(bonus*pezzi);
-const provvigioni=-(lordo*0.5);
+const provvigioni=-(lordo*0.20);
 const netto=lordo+segnalazione+altriCosti+provvigioni;
 
 const elSegTot=document.getElementById('c-calc-segn-tot');
@@ -2331,19 +2331,19 @@ c.data_fine||'',
 c.veicolo||'',
 c.tipo_veicolo||'',
 c.pezzi||1,
-(parseFloat(c.margine)||0).toFixed(2),
-(parseFloat(c.bonus)||0).toFixed(2),
+(parseFloat(c.margine)||0),
+(parseFloat(c.bonus)||0),
 (parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))).toFixed(2),
 c.segnalatore||'',
 c.pezzi_segnalazione||0,
-    (parseFloat(c.costo_segnalazione_unitario)||0).toFixed(2),
-    (parseFloat(c.margine_segnalazione)||0).toFixed(2),
+    (parseFloat(c.costo_segnalazione_unitario)||0),
+    (parseFloat(c.margine_segnalazione)||0),
 c.altri_costi_desc||'',
-    (parseFloat(c.altri_costi_unitario)||0).toFixed(2),
+    (parseFloat(c.altri_costi_unitario)||0),
     c.altri_costi_pezzi||0,
-    (parseFloat(c.altri_costi)||0).toFixed(2),
-(parseFloat(c.provvigioni)||0).toFixed(2),
-(parseFloat(c.margine_netto)||0).toFixed(2),
+    (parseFloat(c.altri_costi)||0),
+(parseFloat(c.provvigioni)||0),
+(parseFloat(c.margine_netto)||0),
 c.collega||'',
 c.note||''
 ].map(esc).join(sep);
@@ -2372,8 +2372,8 @@ const totNetto=rows.reduce((s,c)=>s+(parseFloat(c.margine_netto)||0),0);
 const totRow=[
 esc('TOTALE '+vend),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),
 esc(''),esc(''),esc(''),esc(''),esc(''),esc(''),
-esc(totPezzi),esc(''),esc(''),esc(totLordo.toFixed(2)),
-esc(''),esc(''),esc(''),esc(totProvv.toFixed(2)),esc(totNetto.toFixed(2)),esc(''),esc('')
+esc(totPezzi),esc(''),esc(''),esc(totLordo),
+esc(''),esc(''),esc(''),esc(totProvv.toFixed(2)),esc(totNetto),esc(''),esc('')
 ].join(sep);
 csvFull+=section+'\n'+hdrRow+'\n'+dataRows.join('\n')+'\n'+totRow+'\n\n';
 }
@@ -2403,7 +2403,7 @@ const rows=contratti.map(toRow);
 const totPezzi=contratti.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
 const totLordo=contratti.reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1))),0);
 const totNetto=contratti.reduce((s,c)=>s+(parseFloat(c.margine_netto)||0),0);
-const totRow=[esc('TOTALE'),...Array(15).fill(esc('')),esc(totPezzi),esc(''),esc(''),esc(totLordo.toFixed(2)),esc(''),esc(''),esc(''),esc(''),esc(totNetto.toFixed(2)),esc(''),esc('')].join(sep);
+const totRow=[esc('TOTALE'),...Array(15).fill(esc('')),esc(totPezzi),esc(''),esc(''),esc(totLordo),esc(''),esc(''),esc(''),esc(''),esc(totNetto),esc(''),esc('')].join(sep);
 const csvContent=[headers.map(esc).join(sep),...rows,totRow].join('\n');
 const BOM=new Uint8Array([0xEF,0xBB,0xBF]);
 const encoder=new TextEncoder();
@@ -2469,7 +2469,7 @@ const costoAltriUnitNum=parseFloat(document.getElementById('c-altri-costi-unitar
  const pezziAltriNum=parseInt(document.getElementById('c-altri-costi-pezzi')?.value)||0;
  const altriCostiNum=costoAltriUnitNum>0?-(Math.abs(costoAltriUnitNum)*pezziAltriNum):0;
 const lordo=(margineNum*pezziNum)+(bonusNum*pezziNum);
-const provvigioniNum=-(lordo*0.5);
+const provvigioniNum=-(lordo*0.20);
 const netto=lordo+segnalazioneNum+altriCostiNum+provvigioniNum;
 let tipoVeicoloFinal=tipoVeicolo;
 if(tipoVeicolo==='altro')tipoVeicoloFinal=document.getElementById('c-tipo-veicolo-custom')?.value.trim()||'';
@@ -2892,7 +2892,17 @@ async function esportaExcelDirezione(){
   if(!contratti.length){showToast('Nessun contratto per '+formatMese(filtroMese));return;}
   const headers=['Mese','Data Firma','N° BO','Consulente','Partner','Società Noleggio','Cliente','Città','Prodotto','Veicolo','Tipo Veicolo','Pezzi','Margine Unit.','Bonus','Lordo','Segnalatore','Costo Segn.','Altri costi','Provvigioni','Margine Netto'];
   const sep=';';
-  const esc=v=>'"'+String(v===null||v===undefined?'':v).replace(/"/g,'""')+'"';
+  const esc=v=>{
+    if(v===null||v===undefined)return'""';
+    if(typeof v==='number'){return'"'+v.toFixed(2).replace('.',',')+'"';}
+    return'"'+String(v).replace(/"/g,'""')+'"';
+  }
+  const escNum=v=>{
+    if(v===null||v===undefined||v==='')return'""';
+    const n=parseFloat(v);
+    if(isNaN(n))return'"'+String(v).replace(/"/g,'""')+'"';
+    return'"'+n.toFixed(2).replace('.',',')+'"';
+  };
   const byVend={};
   contratti.forEach(c=>{const v=c.venditore_nome||'Sconosciuto';if(!byVend[v])byVend[v]=[];byVend[v].push(c);});
   let csvFull='';
@@ -2904,15 +2914,15 @@ async function esportaExcelDirezione(){
     csvFull+=headers.map(esc).join(sep)+'\n';
     rows.forEach(c=>{
       csvFull+=[c.mese,c.data_firma,c.nbo,c.venditore_nome,c.partner,c.societa_noleggio,c.cliente,c.citta,c.prodotto,c.veicolo,c.tipo_veicolo,c.pezzi||1,
-        (parseFloat(c.margine)||0).toFixed(2),(parseFloat(c.bonus)||0).toFixed(2),(parseFloat(c.margine_totale_lordo)||0).toFixed(2),
-        c.segnalatore,(parseFloat(c.margine_segnalazione)||0).toFixed(2),(parseFloat(c.altri_costi)||0).toFixed(2),
-        (parseFloat(c.provvigioni)||0).toFixed(2),(parseFloat(c.margine_netto)||0).toFixed(2)
+        parseFloat(c.margine)||0,parseFloat(c.bonus)||0,parseFloat(c.margine_totale_lordo)||0,
+        c.segnalatore,parseFloat(c.margine_segnalazione)||0,parseFloat(c.altri_costi)||0,
+        parseFloat(c.provvigioni)||0,parseFloat(c.margine_netto)||0
       ].map(esc).join(sep)+'\n';
     });
     const totLordo=rows.reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||0),0);
     const totNetto=rows.reduce((s,c)=>s+(parseFloat(c.margine_netto)||0),0);
     const totPezzi=rows.reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
-    csvFull+=esc('TOTALE')+',,,,,,,,,,,'+esc(totPezzi)+',,,,,,,,'+esc(totNetto.toFixed(2))+'\n\n';
+    csvFull+=esc('TOTALE')+',,,,,,,,,,,'+esc(totPezzi)+',,,,,,,,'+esc(totNetto)+'\n\n';
   }
   const BOM=new Uint8Array([0xEF,0xBB,0xBF]);
   const csvBytes=encoder.encode(csvFull);
