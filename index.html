@@ -847,7 +847,11 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Ro
       <div class="form-group"><div class="form-label">Costo segnalazione unitario (€) <span style="color:var(--text3);font-size:10px">per singolo pezzo</span></div><input id="c-segnalazione" type="number" placeholder="es. 100" min="0" step="0.01" oninput="calcolaMargini()"></div>
       <div class="form-group"><div class="form-label">Pezzi con segnalazione</div><input id="c-pezzi-segnalazione" type="number" placeholder="es. 3" min="0" step="1" oninput="calcolaMargini()"></div>
       <div class="form-group"><div class="form-label">Totale segnalazione (calcolato)</div><div id="c-calc-segn-tot" style="font-size:15px;font-weight:700;color:var(--red);padding:8px 11px;background:var(--gray);border-radius:7px;border:1px solid var(--border2)">- € 0,00</div></div>
-      <div class="form-group"><div class="form-label">Altri costi (€) <span style="color:var(--text3);font-size:10px">inserire con segno negativo</span></div><input id="c-altri-costi" type="number" placeholder="es. -50" step="0.01" oninput="calcolaMargini()"></div>
+      <div class="form-group form-full"><div class="form-label">Descrizione altri costi</div><input id="c-altri-costi-desc" type="text" placeholder="es. Spese trasporto, Allestimento, Accessori..."></div>
+      <div class="form-group"><div class="form-label">Costo unitario altri costi (€) <span style="color:var(--text3);font-size:10px">per singolo pezzo</span></div><input id="c-altri-costi-unitario" type="number" placeholder="es. 50" min="0" step="0.01" oninput="calcolaMargini()"></div>
+      <div class="form-group"><div class="form-label">Pezzi con altri costi</div><input id="c-altri-costi-pezzi" type="number" placeholder="es. 2" min="0" step="1" oninput="calcolaMargini()"></div>
+      <div class="form-group"><div class="form-label">Totale altri costi (calcolato)</div><div id="c-calc-altri-tot" style="font-size:15px;font-weight:700;color:var(--red);padding:8px 11px;background:var(--gray);border-radius:7px;border:1px solid var(--border2)">- € 0,00</div></div>
+      <input type="hidden" id="c-altri-costi" value="0">
       <div class="form-group"><div class="form-label">Provvigioni consulente (€) <span style="color:var(--text3);font-size:10px">calcolato automaticamente al 50%</span></div><input id="c-provvigioni" type="number" placeholder="Calcolato automaticamente" step="0.01" style="background:var(--gray)" readonly oninput="calcolaMargini()"></div>
     </div>
     <div style="padding:8px 17px 0;background:var(--gray);border-bottom:1px solid var(--border);border-top:1px solid var(--border)">
@@ -2098,7 +2102,14 @@ const pezzi=parseInt(document.getElementById('c-pezzi')?.value)||1;
 const costoSegnUnitario=parseFloat(document.getElementById('c-segnalazione')?.value)||0;
 const pezziSegn=parseInt(document.getElementById('c-pezzi-segnalazione')?.value)||0;
 const segnalazione=costoSegnUnitario>0?-(Math.abs(costoSegnUnitario)*pezziSegn):0;
-const altriCosti=parseFloat(document.getElementById('c-altri-costi')?.value)||0;
+const costoAltriUnit=parseFloat(document.getElementById('c-altri-costi-unitario')?.value)||0;
+const pezziAltri=parseInt(document.getElementById('c-altri-costi-pezzi')?.value)||0;
+const altriCosti=costoAltriUnit>0?-(Math.abs(costoAltriUnit)*pezziAltri):0;
+// Aggiorna hidden field e display
+const hiddenAltri=document.getElementById('c-altri-costi');
+if(hiddenAltri)hiddenAltri.value=altriCosti.toFixed(2);
+const elAltriTot=document.getElementById('c-calc-altri-tot');
+if(elAltriTot)elAltriTot.textContent='- € '+(Math.abs(altriCosti)).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
 const lordo=(margine*pezzi)+(bonus*pezzi);
 const provvigioni=-(lordo*0.5);
 const netto=lordo+segnalazione+altriCosti+provvigioni;
@@ -2285,7 +2296,7 @@ const headers=['Mese','Data contratto firmato','N° BO','Data BO','Consulente',
 'Provenienza','Prodotto','Durata noleggio in mesi','Data inizio noleggio',
 'Data fine noleggio','Marca e modello Veicolo','Tipo Veicolo','Pezzi',
 'Margine Unitario (€)','Bonus (€)','Margine Totale Lordo (€)',
-'Nominativo Segnalatore','Pezzi Segnalazione','Costo Segnalazione Unitario (€)','Totale Segnalazione (€)','Altri costi',
+'Nominativo Segnalatore','Pezzi Segnalazione','Costo Segnalazione Unitario (€)','Totale Segnalazione (€)','Descrizione altri costi','Costo unitario altri costi (€)','Pezzi altri costi','Totale altri costi (€)',
 'Provvigioni consulente','Margine netto','Collega in tandem','Note'];
 const sep=';';
 const esc=v=>{
@@ -2317,7 +2328,10 @@ c.segnalatore||'',
 c.pezzi_segnalazione||0,
     (parseFloat(c.costo_segnalazione_unitario)||0).toFixed(2),
     (parseFloat(c.margine_segnalazione)||0).toFixed(2),
-(parseFloat(c.altri_costi)||0).toFixed(2),
+c.altri_costi_desc||'',
+    (parseFloat(c.altri_costi_unitario)||0).toFixed(2),
+    c.altri_costi_pezzi||0,
+    (parseFloat(c.altri_costi)||0).toFixed(2),
 (parseFloat(c.provvigioni)||0).toFixed(2),
 (parseFloat(c.margine_netto)||0).toFixed(2),
 c.collega||'',
@@ -2441,7 +2455,9 @@ const pezziNum=parseInt(pezzi)||1;
 const costoSegnUnit=parseFloat(document.getElementById('c-segnalazione')?.value)||0;
  const pezziSegnNum=parseInt(document.getElementById('c-pezzi-segnalazione')?.value)||0;
  const segnalazioneNum=costoSegnUnit>0?-(Math.abs(costoSegnUnit)*pezziSegnNum):0;
-const altriCostiNum=parseFloat(document.getElementById('c-altri-costi')?.value)||0;
+const costoAltriUnitNum=parseFloat(document.getElementById('c-altri-costi-unitario')?.value)||0;
+ const pezziAltriNum=parseInt(document.getElementById('c-altri-costi-pezzi')?.value)||0;
+ const altriCostiNum=costoAltriUnitNum>0?-(Math.abs(costoAltriUnitNum)*pezziAltriNum):0;
 const lordo=(margineNum*pezziNum)+(bonusNum*pezziNum);
 const provvigioniNum=-(lordo*0.5);
 const netto=lordo+segnalazioneNum+altriCostiNum+provvigioniNum;
@@ -2477,7 +2493,10 @@ pezzi:pezziNum,margine:margineNum,bonus:bonusNum||null,
 margine_totale_lordo:lordo,pezzi_segnalazione:parseInt(document.getElementById('c-pezzi-segnalazione')?.value)||null,
     costo_segnalazione_unitario:parseFloat(document.getElementById('c-segnalazione')?.value)||null,
     margine_segnalazione:segnalazioneNum||null,
-altri_costi:altriCostiNum||null,provvigioni:provvigioniNum,margine_netto:netto,
+altri_costi:altriCostiNum||null,
+    altri_costi_desc:document.getElementById('c-altri-costi-desc')?.value.trim()||null,
+    altri_costi_unitario:parseFloat(document.getElementById('c-altri-costi-unitario')?.value)||null,
+    altri_costi_pezzi:parseInt(document.getElementById('c-altri-costi-pezzi')?.value)||null,provvigioni:provvigioniNum,margine_netto:netto,
 segnalatore:document.getElementById('c-segnalatore')?.value.trim()||null,
 note:document.getElementById('c-note')?.value.trim()||null,created_by:CU.nome
 };
@@ -2488,7 +2507,7 @@ if(editId){const{error}=await sb.from('contratti_chiusi').update(payload).eq('id
 else{const{error}=await sb.from('contratti_chiusi').insert(payload);if(error)throw error;}
 closeModal('modal-contratto');
 showToast('Contratto salvato!');
-['c-cliente','c-citta','c-veicolo','c-margine','c-bonus','c-segnalazione','c-altri-costi','c-segnalatore','c-note','c-nbo','c-data-firma','c-data-bo','c-durata','c-data-inizio','c-data-fine','c-provvigioni'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+['c-cliente','c-citta','c-veicolo','c-margine','c-bonus','c-segnalazione','c-altri-costi','c-altri-costi-desc','c-altri-costi-unitario','c-altri-costi-pezzi','c-segnalatore','c-note','c-nbo','c-data-firma','c-data-bo','c-durata','c-data-inizio','c-data-fine','c-provvigioni','c-pezzi-segnalazione'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 document.getElementById('save-contratto-btn').innerHTML='<i class="ti ti-check"></i> Salva contratto';
 renderSec('contratti');
 }catch(e){showErr(err,'Errore: '+e.message);}
