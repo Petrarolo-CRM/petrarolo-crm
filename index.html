@@ -1901,6 +1901,12 @@ ${tr.slice(0,5).map(t=>`<tr>
 </div>
 </div>`;
 }
+
+  if(window._dashRefreshTimer) clearInterval(window._dashRefreshTimer);
+  window._dashRefreshTimer = setInterval(function(){
+    if(currentSec==='dashboard') rDash();
+  }, 90000);
+
 async function rClienti(){
 let data=[];
 try{const r=await queryClienti();data=r.data||[];}catch(e){}
@@ -2007,7 +2013,7 @@ contratti.forEach(c=>{
 const m=c.mese||'—';
 if(!byMese[m])byMese[m]={pezzi:0,margine:0,contratti:0,venditori:{}};
 byMese[m].pezzi+=(parseInt(c.pezzi)||1);
-byMese[m].margine+=((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1));
+byMese[m].margine+=(parseFloat(c.margine_totale_lordo)||(parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1));
 byMese[m].contratti++;
 const v=c.venditore_nome||'—';
 if(!byMese[m].venditori[v])byMese[m].venditori[v]={pezzi:0,margine:0};
@@ -2016,7 +2022,7 @@ byMese[m].venditori[v].margine+=((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||
 });
 const mesi=Object.keys(byMese).sort().reverse();
 const maxMargine=Math.max(...mesi.map(m=>byMese[m].margine),1);
-const totaleAnno=contratti.filter(c=>c.mese&&c.mese.startsWith(new Date().getFullYear().toString())).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
+const totaleAnno=contratti.filter(c=>c.mese&&c.mese.startsWith(new Date().getFullYear().toString())).reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||(parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
 const pezziAnno=contratti.filter(c=>c.mese&&c.mese.startsWith(new Date().getFullYear().toString())).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
 const ultimi6=mesi.slice(0,6);
 document.getElementById('content').innerHTML=`
@@ -2141,7 +2147,7 @@ const r=await q;contratti=r.data||[];
 }catch(e){}
 const meseCorrente=new Date().toISOString().slice(0,7);
 const thisMonth=contratti.filter(c=>c.mese===meseCorrente);
-const totMargine=thisMonth.reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
+const totMargine=thisMonth.reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||(parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
 const mesi={};
 contratti.forEach(c=>{
 if(!mesi[c.mese])mesi[c.mese]={contratti:[],totPezzi:0,totMargine:0};
@@ -2602,12 +2608,12 @@ init:u.nome.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2),
 clienti:clienti.filter(c=>c.venditore_id===u.id).length,
 lead:clienti.filter(c=>c.venditore_id===u.id&&(c.stato==='Lead'||c.stato_lead==='Nuova'||c.stato_lead==='In lavorazione')).length,
 contratti_mese:contratti.filter(c=>c.venditore_id===u.id&&c.mese===meseCorrente).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0),
-margine_mese:contratti.filter(c=>c.venditore_id===u.id&&c.mese===meseCorrente).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0),
+margine_mese:contratti.filter(c=>c.venditore_id===u.id&&c.mese===meseCorrente).reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||(parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0),
 contratti_tot:contratti.filter(c=>c.venditore_id===u.id).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0),
-margine_tot:contratti.filter(c=>c.venditore_id===u.id).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0),
+margine_tot:contratti.filter(c=>c.venditore_id===u.id).reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||(parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0),
 }));
 const totContratti=contratti.filter(c=>c.mese===meseCorrente).reduce((s,c)=>s+(parseInt(c.pezzi)||1),0);
-const totMargine=contratti.filter(c=>c.mese===meseCorrente).reduce((s,c)=>s+((parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
+const totMargine=contratti.filter(c=>c.mese===meseCorrente).reduce((s,c)=>s+(parseFloat(c.margine_totale_lordo)||(parseFloat(c.margine)||0)*(parseInt(c.pezzi)||1)),0);
 document.getElementById('content').innerHTML=`
 <div class="kpi-g">
 <div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Clienti totali</div><div class="kpi-v">${clienti.length}</div><div class="kpi-d" style="color:var(--text3)">Team completo</div></div>
@@ -2657,6 +2663,13 @@ ${contratti.length===0?`<tr><td colspan="8" style="text-align:center;padding:30p
 </table></div>
 </div>`;
 }
+
+  // Auto-refresh ogni 60 secondi
+  if(window._dirRefreshTimer) clearInterval(window._dirRefreshTimer);
+  window._dirRefreshTimer = setInterval(function(){
+    if(currentSec==='dir-overview') rDirOverview();
+  }, 60000);
+
 async function rTrattative(){
 let data=[];
 try{
