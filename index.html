@@ -2593,6 +2593,203 @@ ${isDir()?`<td style="font-size:11.5px">${c.venditore_nome||'—'}</td>`:''}
 </tbody></table></div>
 </div>`;
 }
+async function rTrattative(){
+  let data=[];
+  try{
+    let q=sb.from('trattative').select('*').order('created_at',{ascending:false});
+    if(!canViewAll())q=q.eq('venditore_id',CU.id);
+    const r=await q;data=r.data||[];
+  }catch(e){console.log('Trattative:',e.message);}
+  const fasi=['In lavorazione','Preventivo inviato','In chiusura','Vinta','Persa'];
+  const fasiColors={'In lavorazione':'bg-n','Preventivo inviato':'bg-o','In chiusura':'bg-go','Vinta':'bg-g','Persa':'bg-r'};
+  const byFase={};fasi.forEach(f=>byFase[f]=0);
+  data.forEach(t=>{const f=t.fase||'In lavorazione';if(byFase[f]!==undefined)byFase[f]++;});
+  const cont=document.getElementById('content');
+  cont.innerHTML=
+    '<div class="kpi-g">'+
+      '<div class="kpi" style="border-top-color:var(--navy)"><div class="kpi-l">Trattative totali</div><div class="kpi-v">'+data.length+'</div><div class="kpi-d" style="color:var(--text3)">Storico</div></div>'+
+      '<div class="kpi" style="border-top-color:var(--orange)"><div class="kpi-l">In lavorazione</div><div class="kpi-v" style="color:var(--orange)">'+(byFase['In lavorazione']||0)+'</div><div class="kpi-d" style="color:var(--text3)">Da lavorare</div></div>'+
+      '<div class="kpi" style="border-top-color:var(--gold)"><div class="kpi-l">In chiusura</div><div class="kpi-v" style="color:var(--gold)">'+(byFase['In chiusura']||0)+'</div><div class="kpi-d" style="color:var(--text3)">Quasi chiuse</div></div>'+
+      '<div class="kpi" style="border-top-color:var(--green)"><div class="kpi-l">Vinte</div><div class="kpi-v" style="color:var(--green)">'+(byFase['Vinta']||0)+'</div><div class="kpi-d" style="color:var(--text3)">Chiuse</div></div>'+
+    '</div>'+
+    '<div class="full-card">'+
+      '<div class="card-head">'+
+        '<span class="card-title"><i class="ti ti-chart-bar" style="color:var(--orange);margin-right:6px"></i>'+(canViewAll()?'Tutte le trattative':'Le mie trattative')+' — '+data.length+'</span>'+
+        '<div style="display:flex;gap:7px;flex-wrap:wrap">'+
+          '<select id="tr-fase" class="btn btn-sm" style="cursor:pointer" onchange="filtroTrattative()"><option value="">Tutte le fasi</option>'+fasi.map(f=>'<option value="'+f+'">'+f+'</option>').join('')+'</select>'+
+          (canViewAll()?'<select id="tr-vend" class="btn btn-sm" style="cursor:pointer" onchange="filtroTrattative()"><option value="">Tutti i consulenti</option></select>':'')+ 
+          '<button class="btn btn-sm" onclick="rTrattative()"><i class="ti ti-refresh"></i> Aggiorna</button>'+
+          '<button class="btn btn-sm btn-orange" onclick="openModal(\'modal-trattativa\')"><i class="ti ti-plus"></i> Nuova trattativa</button>'+
+        '</div>'+
+      '</div>'+
+      '<div id="tr-container" style="padding:8px">'+
+        (data.length?data.map(t=>{
+          const f=t.fase||'In lavorazione';
+          return '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)">'+
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">'+
+              '<div><div style="font-size:14px;font-weight:700;color:var(--navy)">'+(t.cliente_nome||'—')+'</div>'+
+              '<div style="font-size:12px;color:var(--text2);margin-top:2px">'+(t.citta||'')+' '+(t.tipo||'')+'</div></div>'+
+              '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+
+                badge(f,fasiColors[f]||'bg-gr')+
+                '<button class="btn btn-sm" onclick="apriTimelineTrattativa('+t.id+',\''+( t.cliente_nome||'').replace(/'/g,'')+'\')"><i class="ti ti-timeline"></i></button>'+
+                ((canViewAll()||t.venditore_id===CU.id)?'<button class="btn btn-sm" onclick="modificaTrattativa('+t.id+')"><i class="ti ti-edit"></i></button>':'')+
+              '</div>'+
+            '</div>'+
+            '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:8px">'+
+              (t.prodotto?'<div style="font-size:11.5px;color:var(--text2)"><i class="ti ti-car" style="margin-right:4px;color:var(--text3)"></i>'+t.prodotto+'</div>':'')+
+              (t.veicolo?'<div style="font-size:11.5px;color:var(--text2)"><i class="ti ti-truck" style="margin-right:4px;color:var(--text3)"></i>'+t.veicolo+'</div>':'')+
+              (t.valore_stimato?'<div style="font-size:12px;font-weight:700;color:var(--orange)">€ '+parseFloat(t.valore_stimato).toLocaleString('it-IT')+'</div>':'')+
+              (t.venditore_nome?'<div style="font-size:11.5px;color:var(--text2)"><i class="ti ti-user" style="margin-right:4px;color:var(--text3)"></i>'+t.venditore_nome+'</div>':'')+
+            '</div>'+
+            (t.note?'<div style="font-size:12px;color:var(--text2);background:var(--gray);border-radius:7px;padding:8px 10px">'+t.note+'</div>':'')+
+          '</div>';
+        }).join(''):'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna trattativa trovata</div>')+
+      '</div>'+
+    '</div>';
+  setTimeout(async()=>{
+    const sel=document.getElementById('tr-vend');if(!sel)return;
+    try{const{data:u}=await sb.from('crm_utenti').select('id,nome').eq('attivo',true).eq('ruolo','venditore').order('nome');
+    if(u)u.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.nome;sel.appendChild(o);});}catch(e){}
+  },200);
+}
+
+async function filtroTrattative(){
+  const fase=document.getElementById('tr-fase')?.value||'';
+  const vend=document.getElementById('tr-vend')?.value||'';
+  let q=sb.from('trattative').select('*').order('created_at',{ascending:false});
+  if(!canViewAll())q=q.eq('venditore_id',CU.id);
+  if(fase)q=q.eq('fase',fase);
+  if(vend)q=q.eq('venditore_id',parseInt(vend));
+  const{data}=await q;const trats=data||[];
+  const fasi=['In lavorazione','Preventivo inviato','In chiusura','Vinta','Persa'];
+  const fasiColors={'In lavorazione':'bg-n','Preventivo inviato':'bg-o','In chiusura':'bg-go','Vinta':'bg-g','Persa':'bg-r'};
+  const cont=document.getElementById('tr-container');if(!cont)return;
+  cont.innerHTML=trats.length?trats.map(t=>{
+    const f=t.fase||'In lavorazione';
+    return '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'+
+        '<div><div style="font-size:14px;font-weight:700;color:var(--navy)">'+(t.cliente_nome||'—')+'</div>'+
+        '<div style="font-size:12px;color:var(--text2)">'+(t.citta||'')+' '+(t.venditore_nome?'· '+t.venditore_nome:'')+'</div></div>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          badge(f,fasiColors[f]||'bg-gr')+
+          '<button class="btn btn-sm" onclick="apriTimelineTrattativa('+t.id+',\''+( t.cliente_nome||'').replace(/'/g,'')+'\')"><i class="ti ti-timeline"></i></button>'+
+          ((canViewAll()||t.venditore_id===CU.id)?'<button class="btn btn-sm" onclick="modificaTrattativa('+t.id+')"><i class="ti ti-edit"></i></button>':'')+
+        '</div>'+
+      '</div>'+
+      (t.valore_stimato?'<div style="font-size:12px;font-weight:700;color:var(--orange);margin-top:6px">€ '+parseFloat(t.valore_stimato).toLocaleString('it-IT')+'</div>':'')+
+    '</div>';
+  }).join(''):'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna trattativa trovata</div>';
+}
+
+async function modificaTrattativa(id){
+  try{
+    const{data}=await sb.from('trattative').select('*').eq('id',id).single();
+    if(!data){showToast('Errore caricamento');return;}
+    openModal('modal-trattativa');
+    setTimeout(()=>{
+      document.getElementById('tr-cliente').value=data.cliente_nome||'';
+      document.getElementById('tr-citta').value=data.citta||'';
+      document.getElementById('tr-tel').value=data.tel||'';
+      document.getElementById('tr-email').value=data.email||'';
+      document.getElementById('tr-tipo').value=data.tipo||'Azienda';
+      document.getElementById('tr-prodotto').value=data.prodotto||'';
+      document.getElementById('tr-veicolo').value=data.veicolo||'';
+      document.getElementById('tr-tipo-veicolo').value=data.tipo_veicolo||'';
+      document.getElementById('tr-valore').value=data.valore_stimato||'';
+      document.getElementById('tr-probabilita').value=data.probabilita||'';
+      document.getElementById('tr-fase-input').value=data.fase||'In lavorazione';
+      document.getElementById('tr-data-chiusura').value=data.data_chiusura_prevista||'';
+      document.getElementById('tr-note').value=data.note||'';
+      document.getElementById('save-trattativa-btn').dataset.editId=id;
+      document.getElementById('save-trattativa-btn').innerHTML='<i class="ti ti-check"></i> Aggiorna trattativa';
+    },100);
+  }catch(e){showToast('Errore: '+e.message);}
+}
+
+async function salvaTrattativa(){
+  const btn=document.getElementById('save-trattativa-btn');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader"></i> Salvataggio...';
+  const cliente=document.getElementById('tr-cliente')?.value.trim();
+  if(!cliente){showToast('Inserisci il nome del cliente');btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva trattativa';return;}
+  const payload={
+    cliente_nome:cliente,
+    citta:document.getElementById('tr-citta')?.value.trim()||null,
+    tel:document.getElementById('tr-tel')?.value.trim()||null,
+    email:document.getElementById('tr-email')?.value.trim()||null,
+    tipo:document.getElementById('tr-tipo')?.value||'Azienda',
+    prodotto:document.getElementById('tr-prodotto')?.value.trim()||null,
+    veicolo:document.getElementById('tr-veicolo')?.value.trim()||null,
+    tipo_veicolo:document.getElementById('tr-tipo-veicolo')?.value||null,
+    valore_stimato:parseFloat(document.getElementById('tr-valore')?.value)||null,
+    probabilita:parseInt(document.getElementById('tr-probabilita')?.value)||null,
+    fase:document.getElementById('tr-fase-input')?.value||'In lavorazione',
+    data_chiusura_prevista:document.getElementById('tr-data-chiusura')?.value||null,
+    note:document.getElementById('tr-note')?.value.trim()||null,
+    venditore_id:CU.id,venditore_nome:CU.nome,stato:'Aperta'
+  };
+  try{
+    const editId=document.getElementById('save-trattativa-btn').dataset.editId;
+    if(editId){
+      const{error}=await sb.from('trattative').update(payload).eq('id',parseInt(editId));
+      if(error)throw error;
+      delete document.getElementById('save-trattativa-btn').dataset.editId;
+      showToast('Trattativa aggiornata!');
+    }else{
+      const{error}=await sb.from('trattative').insert(payload);
+      if(error)throw error;
+      showToast('Trattativa salvata!');
+    }
+    closeModal('modal-trattativa');
+    renderSec('trattative');
+  }catch(e){showToast('Errore: '+e.message);}
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i> Salva trattativa';
+}
+
+async function apriTimelineTrattativa(id,nome){
+  window._trattativaId=id;window._trattativaNome=nome;
+  openModal('modal-timeline-trattativa');
+  const content=document.getElementById('trt-content');
+  content.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3)">Caricamento...</div>';
+  document.getElementById('trt-title').textContent='Timeline: '+nome;
+  try{
+    const{data}=await sb.from('trattative_attivita').select('*').eq('trattativa_id',id).order('created_at',{ascending:false});
+    const attivita=data||[];
+    const iconMap={'Chiamata telefonica':'ti-phone','Visita cliente':'ti-building','Email inviata':'ti-mail','Preventivo inviato':'ti-file-invoice','Appuntamento fissato':'ti-calendar','Nota interna':'ti-notes'};
+    content.innerHTML=attivita.length?attivita.map(a=>
+      '<div style="display:flex;gap:10px;margin-bottom:14px">'+
+        '<div style="width:30px;height:30px;border-radius:50%;background:var(--navy-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+          '<i class="ti '+(iconMap[a.tipo]||'ti-notes')+'" style="font-size:14px;color:var(--navy)"></i>'+
+        '</div>'+
+        '<div style="flex:1;background:var(--gray);border-radius:9px;padding:10px 13px">'+
+          '<div style="display:flex;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:4px">'+
+            '<span style="font-size:12.5px;font-weight:700">'+a.tipo+'</span>'+
+            '<span style="font-size:10.5px;color:var(--text3)">'+new Date(a.created_at).toLocaleString('it-IT')+' · '+(a.venditore_nome||'—')+'</span>'+
+          '</div>'+
+          (a.descrizione?'<div style="font-size:12px;color:var(--text)">'+a.descrizione+'</div>':'')+
+          (a.risposta_cliente?'<div style="margin-top:6px;background:#fff;border-radius:6px;padding:7px 10px;border-left:3px solid var(--orange);font-size:12px;color:var(--text2)"><strong>Risposta:</strong> '+a.risposta_cliente+'</div>':'')+
+        '</div>'+
+      '</div>'
+    ).join(''):'<div style="padding:30px;text-align:center;color:var(--text3)">Nessuna attività registrata</div>';
+  }catch(e){content.innerHTML='<div style="padding:20px;text-align:center;color:var(--red)">Errore caricamento</div>';}
+}
+
+async function salvaTlTrattativa(){
+  const tipo=document.getElementById('trt-tipo')?.value;
+  const desc=document.getElementById('trt-desc')?.value.trim();
+  if(!tipo||!desc){showToast('Compila tipo e descrizione');return;}
+  const btn=document.getElementById('trt-save-btn');btn.disabled=true;
+  try{
+    await sb.from('trattative_attivita').insert({trattativa_id:window._trattativaId,tipo,descrizione:desc,risposta_cliente:document.getElementById('trt-risposta')?.value.trim()||null,venditore_id:CU.id,venditore_nome:CU.nome});
+    document.getElementById('trt-tipo').value='';
+    document.getElementById('trt-desc').value='';
+    document.getElementById('trt-risposta').value='';
+    showToast('Attività salvata!');
+    apriTimelineTrattativa(window._trattativaId,window._trattativaNome);
+  }catch(e){showToast('Errore: '+e.message);}
+  btn.disabled=false;
+}
+
+
 async function rDirOverview(){
   if(!isDir()){document.getElementById('content').innerHTML='<div style="padding:30px;text-align:center;color:var(--red)">Accesso riservato.</div>';return;}
   const filtroMese=document.getElementById('dir-filtro-mese')?.value||new Date().toISOString().slice(0,7);
