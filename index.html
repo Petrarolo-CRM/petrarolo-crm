@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -2937,6 +2936,19 @@ async function esportaExcelDirezione(){
   showToast('Excel esportato!');
 }
 
+
+/* Avvio automatico: configurazione Supabase integrata, nessuna richiesta all'utente */
+(function(){
+  var DEF_URL='https://pptzcldqqznyhevkqiob.supabase.co';
+  var DEF_KEY='sb_publishable_MLh4USvttp52Dsk8L3n2KQ_dvr_Z7AN';
+  try{
+    if(!localStorage.getItem('p_url')) localStorage.setItem('p_url',DEF_URL);
+    if(!localStorage.getItem('p_key')) localStorage.setItem('p_key',DEF_KEY);
+  }catch(e){}
+  var u=DEF_URL,k=DEF_KEY;
+  try{u=localStorage.getItem('p_url')||DEF_URL;k=localStorage.getItem('p_key')||DEF_KEY;}catch(e){}
+  initSB(u,k);
+})();
 </script>
 </body>
 </html>
